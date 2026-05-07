@@ -3,7 +3,7 @@
 > Hybrid machine learning architecture for operational fraud detection using anomaly detection, supervised learning, behavioural analytics, explainable AI, and continuous feedback loops.
 
 ---
-
+ 
 # 📌 Project Objective
 
 This project demonstrates a conceptual end-to-end fraud detection system designed to support MOT enforcement operations at scale.
