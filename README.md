@@ -1,293 +1,269 @@
-# 🛡️ MOT Fraud Risk Scoring System
+# 🚗 MOT Fraud Risk Scoring System
 
-Production-style hybrid fraud detection architecture for identifying suspicious MOT testing behaviour using anomaly detection, supervised learning, risk scoring, and continuous retraining pipelines.
+An end-to-end machine learning fraud detection architecture designed to identify suspicious MOT tests and testers using anomaly detection, supervised learning, behavioural analytics, and continuous feedback retraining.
 
----
-
-# 🎯 Project Objective
-
-This project explores how machine learning can support operational fraud detection within MOT testing environments.
-
-The system combines:
-
-- behavioural anomaly detection
-- supervised fraud classification
-- composite risk scoring
-- enforcement feedback loops
-- continuous model retraining
-
-to prioritise high-risk MOT tests and testers for investigation.
-
-Rather than relying purely on historical fraud labels, the architecture is intentionally designed to detect:
-
-✔ known fraud patterns  
-✔ hidden fraud behaviours  
-✔ previously unseen fraud techniques  
+This project simulates how a national-scale MOT fraud detection platform could operate using real-world data science, MLOps, and cloud engineering principles.
 
 ---
 
-# 🧠 Core Detection Philosophy
+# 📌 Project Objectives
 
-The system follows a layered fraud detection strategy:
+The system was designed to:
 
-## Layer 1 — Isolation Forest
-
-Detects statistically unusual behaviour without requiring fraud labels.
-
-Examples:
-- unusually short test durations
-- abnormal pass rates
-- suspicious behavioural shifts
-- peer-group deviations
+- Detect potentially fraudulent MOT tests
+- Rank suspicious testers and garages by risk
+- Reduce enforcement investigation time
+- Combine unsupervised + supervised ML approaches
+- Continuously improve as new confirmed fraud cases are discovered
+- Demonstrate production-scale architecture thinking beyond notebook-only modelling
 
 ---
 
-## Layer 2 — XGBoost Supervised Learning
+# 🧠 Core Machine Learning Strategy
 
-Learns patterns from confirmed fraud investigations.
+The project intentionally uses a **two-layer fraud detection approach**.
 
-Uses:
-- labelled fraud cases
-- engineered behavioural features
-- anomaly scores from Isolation Forest
-- domain-rule signals
+## Phase 1 — Early System (Small Labelled Fraud Dataset)
 
----
+Initially, confirmed fraud labels are limited.
 
-## Layer 3 — Composite Risk Scoring
+Therefore:
 
-Combines:
-- anomaly score
-- supervised fraud probability
-- rule-based indicators
+- **Isolation Forest** acts as the PRIMARY model
+- XGBoost acts as a SECONDARY supervised enhancer
+- The system focuses on detecting anomalous behavioural patterns
 
-into a single operational risk score.
+This allows the platform to discover fraud even when little historical fraud data exists.
 
 ---
 
-# 🔄 Operational ML Workflow & Continuous Learning
+## Phase 2 — Mature System (Large Labelled Fraud Library)
 
-This project was designed as a production-style fraud detection system rather than a standalone notebook model.
+As enforcement teams confirm fraud cases:
 
-The workflow combines:
+- Fraud labels grow monthly
+- XGBoost retrains on increasingly richer labelled data
+- XGBoost gradually becomes the PRIMARY model
+- Isolation Forest becomes the SAFETY NET model
 
-- cloud-native data engineering
-- SQL enrichment pipelines
-- anomaly detection
-- supervised learning
-- composite risk scoring
-- operational dashboards
-- enforcement feedback loops
-- continuous retraining
+At maturity:
 
-As labelled fraud data grows over time, the system evolves from primarily anomaly-based detection toward a more supervised learning architecture, while retaining Isolation Forest as a safety-net model for novel fraud patterns.
-
-![Operational ML Workflow](images/operational_ml_workflow.png)
-
----
-
-# 🖼️ System Walkthrough
-
-## 📊 Data Foundation & Feature Engineering
-
-The platform joins multiple MOT-related datasets into enriched behavioural records.
-
-Includes:
-- MOT test data
-- vehicle information
-- tester / site information
-- historical testing behaviour
-- domain-rule flags
-- confirmed fraud labels
-
-![Data Foundation](images/slide2_data_foundation.png)
-
----
-
-## 🌲 Isolation Forest — Unsupervised Anomaly Detection
-
-Isolation Forest acts as the primary fraud discovery mechanism during early deployment when labelled fraud data is limited.
-
-The model identifies:
-- statistical anomalies
-- peer-group deviations
-- suspicious behavioural outliers
-
-without requiring known fraud examples.
-
-![Isolation Forest](images/slide3_isolation_forest.png)
-
----
-
-## ⚡ XGBoost — Supervised Fraud Layer
-
-Confirmed fraud cases are used to train XGBoost on known fraud behaviour patterns.
-
-The supervised layer:
-- learns fraud fingerprints
-- improves calibration
-- reduces false positives
-- strengthens operational ranking
-
-![XGBoost Layer](images/slide4_xgboost.png)
-
----
-
-## 🔁 Continuous Learning & Model Evolution
-
-The platform continuously improves through enforcement feedback loops.
-
-Confirmed fraud investigations become new training labels.
-
-Over time:
-- XGBoost becomes increasingly dominant
-- Isolation Forest transitions into a safety-net anomaly layer
-- fraud detection capability matures continuously
-
-![Continuous Learning](images/slide5_living_system.png)
-
----
-
-# 🧮 Composite Risk Scoring
-
-Final operational risk scores combine:
-
-```python
-risk_score = (
-    0.50 * isolation_forest_score +
-    0.30 * xgboost_probability +
-    0.20 * domain_rule_score
-)
-```
-
-This produces prioritised investigation queues for enforcement teams.
-
-Example risk bands:
-
-| Risk Score | Classification |
+| Model | Role |
 |---|---|
-| 0.00 – 0.39 | Low Risk |
-| 0.40 – 0.69 | Medium Risk |
-| 0.70 – 1.00 | High Risk |
+| XGBoost | Main fraud probability engine |
+| Isolation Forest | Detects novel unseen fraud patterns |
+
+This mirrors how real enterprise fraud platforms evolve over time.
 
 ---
 
-# 🧠 Why Hybrid Detection Matters
+# 🏗️ End-to-End Technical Workflow
 
-Traditional supervised fraud detection struggles because:
+## 🔄 Operational ML Workflow
 
-- fraud labels are incomplete
-- absence of a label does not guarantee legitimacy
-- new fraud behaviours constantly emerge
-
-This architecture solves that problem by combining:
-
-| Capability | Model |
-|---|---|
-| Detect unusual behaviour | Isolation Forest |
-| Learn known fraud patterns | XGBoost |
-| Catch new fraud techniques | Isolation Forest |
-| Improve precision over time | XGBoost |
-| Operational prioritisation | Composite scoring |
+![Technical Workflow](images/tech_flow.png)
 
 ---
 
-# ☁️ Technology Stack
+# 📊 System Presentation Slides
 
-| Area | Tools |
+---
+
+## 1️⃣ Platform Overview
+
+![Overview](images/slide1-overview.png)
+
+### Highlights
+- National-scale MOT fraud context
+- Risk ranking pipeline
+- Enforcement feedback loop
+- Continuous retraining architecture
+
+---
+
+## 2️⃣ Data Foundation & SQL Enrichment
+
+![Data Foundation](images/slide2-data-foundation.png)
+
+### Key Data Science Concepts
+- SQL LEFT JOIN enrichment
+- Window functions
+- Peer-group behavioural features
+- Fraud rule engineering
+- Missingness as signal
+- Unit-of-analysis design
+
+### Technologies
+- SQL
+- AWS Glue
+- PySpark
+- Athena
+- S3
+
+---
+
+## 3️⃣ Isolation Forest — Unsupervised Detection
+
+![Isolation Forest](images/slide3-isolation-forest.png)
+
+### Why Isolation Forest
+- No labels required
+- Scales to millions of tests
+- Detects unusual tester behaviour
+- Effective during early fraud-library stages
+
+### Alternative Models Evaluated
+- LOF
+- One-Class SVM
+- Fast MCD
+- PCA + inverse reconstruction
+
+### Key Features Engineered
+- Test duration
+- Tester pass-rate deviation
+- Missing odometer behaviour
+- Retest frequency
+- Peer-group comparisons
+
+---
+
+## 4️⃣ XGBoost — Supervised Fraud Probability Layer
+
+![XGBoost](images/slide4-xgboost-risk-scoring.png)
+
+### Why XGBoost
+- Learns confirmed fraud patterns
+- Handles non-linear feature interactions
+- Produces explainable feature importance
+- Strong tabular-data performance
+
+### Composite Risk Score
+The final risk score combines:
+
+- Isolation Forest anomaly score
+- XGBoost fraud probability
+- Domain-rule activation
+
+This creates:
+- HIGH risk
+- MEDIUM risk
+- LOW risk prioritisation
+
+### Explainability
+The system is intentionally designed to remain:
+
+- Explainable to investigators
+- Auditable
+- Court-defensible
+- Operationally interpretable
+
+---
+
+## 5️⃣ Continuous Learning & Feedback Loop
+
+![Feedback Loop](images/slide5-feedback-loop.png)
+
+### Continuous Improvement Architecture
+
+As enforcement confirms fraud:
+
+1. Verdict returns into fraud library
+2. SQL enriched dataset updates
+3. XGBoost retrains monthly
+4. Fraud detection accuracy improves
+5. Isolation Forest continues catching unseen fraud types
+
+This creates a living fraud detection ecosystem rather than a static model.
+
+---
+
+# ☁️ Cloud & Engineering Stack
+
+| Area | Technology |
 |---|---|
-| Data Storage | AWS S3 |
-| Query Layer | AWS Athena |
-| ETL Pipelines | AWS Glue |
+| Storage | AWS S3 |
+| ETL | AWS Glue |
 | Distributed Processing | PySpark |
-| Feature Engineering | SQL + Pandas |
-| ML Models | scikit-learn + XGBoost |
-| Model Hosting | AWS SageMaker |
+| Query Engine | Athena |
+| ML Platform | SageMaker |
+| Unsupervised ML | Isolation Forest |
+| Supervised ML | XGBoost |
 | Scheduling | AWS EventBridge |
-| Event Triggers | AWS Lambda |
-| Dashboards | Power BI |
-| Explainability | SHAP |
-| Notebook Development | Jupyter / Colab |
+| Event Processing | AWS Lambda |
+| Dashboarding | Power BI |
+| Analysis | Python + Pandas |
+| Feature Engineering | SQL |
 
 ---
 
-# 📈 Feature Engineering Examples
+# 🧪 Data Science Techniques Demonstrated
 
-Key behavioural features include:
-
-- average MOT duration
-- tests per hour
-- pass-rate deviation vs peers
-- defect-rate anomalies
-- retest frequency
-- odometer inconsistencies
-- temporal behaviour shifts
-- peer-group normalisation
-- missingness indicators
-- rule-based fraud flags
+## Feature Engineering
+- Rolling averages
+- Peer-group comparisons
+- Behavioural aggregation
+- Fraud-rule features
+- Window functions
+- Missingness indicators
 
 ---
 
-# 🧪 Validation Strategy
-
-The system uses:
-
-- time-based validation splits
-- labelled fraud recall analysis
-- Precision@K
-- operational trial comparisons
-- enforcement outcome feedback
-
-This prevents:
-- data leakage
-- overfitting
-- unrealistic offline performance
+## Machine Learning
+- Unsupervised anomaly detection
+- Supervised classification
+- Ensemble scoring
+- Composite risk modelling
+- Threshold optimisation
 
 ---
 
-# ⚖️ Governance & Explainability
-
-The platform is designed for public-sector operational use.
-
-Key principles:
-
-✔ GDPR-aware design  
-✔ auditability  
-✔ explainable risk scoring  
-✔ human-in-the-loop decisions  
-✔ proportional data use  
-✔ transparent investigation workflows  
-
-No automated enforcement decisions are made by the model.
-
-The system supports investigators rather than replacing them.
+## Validation Strategy
+- Time-aware validation
+- Fraud-library growth simulation
+- Controlled enforcement trial design
+- Operational evaluation metrics
 
 ---
 
-# 🚀 Future Enhancements
+# 🔒 Governance & Responsible AI
+
+The project incorporates:
+
+- GDPR-aware processing
+- Data minimisation principles
+- Human-in-the-loop enforcement
+- Explainable ML outputs
+- Auditability considerations
+
+No personal identifiers are required for model scoring.
+
+---
+
+# 📈 Future Enhancements
 
 Potential future extensions include:
 
-- CCTV-based anomaly detection
-- convolutional autoencoders
-- graph-based fraud networks
-- LLM-generated enforcement summaries
-- active learning workflows
-- real-time fraud scoring
-- streaming anomaly detection
-- multimodal fraud intelligence
+- ANPR roadside camera integration
+- CCTV-based inspection analysis
+- Autoencoder video anomaly detection
+- LLM-assisted enforcement reporting
+- Real-time fraud streaming pipelines
+- Graph-based fraud network analysis
 
 ---
 
-# 📂 Repository Contents
+# 🎯 What This Project Demonstrates
 
-| File | Description |
-|---|---|
-| `README.md` | Project overview |
-| `tech_flow_v2.html` | Interactive operational ML workflow |
-| `presentation.pdf` | Full presentation slides |
-| `notebooks/` | Experimental notebooks |
-| `images/` | README visual assets |
+This project was built to demonstrate:
+
+✅ End-to-end machine learning system design  
+✅ Real-world fraud analytics thinking  
+✅ Production-scale architecture awareness  
+✅ Advanced feature engineering  
+✅ MLOps lifecycle understanding  
+✅ Cloud-native data science concepts  
+✅ Explainable AI design principles  
+✅ Operational deployment thinking  
 
 ---
 
@@ -295,15 +271,6 @@ Potential future extensions include:
 
 Victoria Moreno Sempere
 
-Data Scientist focused on:
-- machine learning systems
-- operational AI
-- fraud detection
-- health & public-sector analytics
-- explainable AI
-- scalable ML workflows
-
-LinkedIn:
-https://www.linkedin.com/in/victoria-moreno-sempere-01a438153/
+Data Science | Machine Learning | Fraud Analytics | Healthcare & Public Sector AI
 
 ---
