@@ -21,7 +21,7 @@ The system was designed to:
 
 # 🧠 Core Machine Learning Strategy
 
-The project intentionally uses a **two-layer fraud detection approach**.
+The project intentionally uses a two-layer fraud detection approach.
 
 ## Phase 1 — Early System (Small Labelled Fraud Dataset)
 
@@ -29,7 +29,7 @@ Initially, confirmed fraud labels are limited.
 
 Therefore:
 
-- **Isolation Forest** acts as the PRIMARY model
+- Isolation Forest acts as the PRIMARY model
 - XGBoost acts as a SECONDARY supervised enhancer
 - The system focuses on detecting anomalous behavioural patterns
 
@@ -59,9 +59,7 @@ This mirrors how real enterprise fraud platforms evolve over time.
 
 # 🏗️ End-to-End Technical Workflow
 
-## 🔄 Operational ML Workflow
-
-![Technical Workflow](images/tech_flow.png)
+![Technical Workflow](tech_flow.png)
 
 ---
 
@@ -71,7 +69,7 @@ This mirrors how real enterprise fraud platforms evolve over time.
 
 ## 1️⃣ Platform Overview
 
-![Overview](images/slide1-overview.png)
+![Overview](slide1-overview.png)
 
 ### Highlights
 - National-scale MOT fraud context
@@ -83,7 +81,7 @@ This mirrors how real enterprise fraud platforms evolve over time.
 
 ## 2️⃣ Data Foundation & SQL Enrichment
 
-![Data Foundation](images/slide2-data-foundation.png)
+![Data Foundation](slide2-data-foundation.png)
 
 ### Key Data Science Concepts
 - SQL LEFT JOIN enrichment
@@ -104,7 +102,7 @@ This mirrors how real enterprise fraud platforms evolve over time.
 
 ## 3️⃣ Isolation Forest — Unsupervised Detection
 
-![Isolation Forest](images/slide3-isolation-forest.png)
+![Isolation Forest](slide3-isolation-forest.png)
 
 ### Why Isolation Forest
 - No labels required
@@ -129,7 +127,7 @@ This mirrors how real enterprise fraud platforms evolve over time.
 
 ## 4️⃣ XGBoost — Supervised Fraud Probability Layer
 
-![XGBoost](images/slide4-xgboost-risk-scoring.png)
+![XGBoost](slide4-xgboost-risk-scoring.png)
 
 ### Why XGBoost
 - Learns confirmed fraud patterns
@@ -138,6 +136,7 @@ This mirrors how real enterprise fraud platforms evolve over time.
 - Strong tabular-data performance
 
 ### Composite Risk Score
+
 The final risk score combines:
 
 - Isolation Forest anomaly score
@@ -150,6 +149,7 @@ This creates:
 - LOW risk prioritisation
 
 ### Explainability
+
 The system is intentionally designed to remain:
 
 - Explainable to investigators
@@ -161,7 +161,7 @@ The system is intentionally designed to remain:
 
 ## 5️⃣ Continuous Learning & Feedback Loop
 
-![Feedback Loop](images/slide5-feedback-loop.png)
+![Feedback Loop](slide5-feedback-loop.png)
 
 ### Continuous Improvement Architecture
 
@@ -272,5 +272,3 @@ This project was built to demonstrate:
 Victoria Moreno Sempere
 
 Data Science | Machine Learning | Fraud Analytics | Healthcare & Public Sector AI
-
----
