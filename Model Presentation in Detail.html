@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DVSA MOT Fraud Risk Scoring System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --green:#1D9E75;--green-light:#9FE1CB;--green-dim:rgba(29,158,117,.15);
+  --blue:#378ADD;--blue-light:#85B7EB;
+  --coral:#D85A30;--coral-light:#F0997B;
+  --purple:#7F77DD;--purple-light:#AFA9EC;
+  --amber:#EF9F27;--amber-light:#FAC775;
+  --red:#E24B4A;--red-light:#F09595;
+  --bg:#08111f;--bg2:rgba(255,255,255,.03);--bg3:rgba(255,255,255,.06);
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.15);
+  --text:rgba(255,255,255,.95);--text2:rgba(159,225,203,.75);--text3:rgba(159,225,203,.45);
+}
+
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text)}
+
+/* SLIDE SYSTEM */
+.slides-wrap{width:100%;height:100vh;position:relative}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 48px;opacity:0;pointer-events:none;transition:opacity .6s ease;overflow:hidden}
+.slide.active{opacity:1;pointer-events:all}
+
+/* GRID BG */
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(29,158,117,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(29,158,117,.06) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+
+/* NAV */
+.nav{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:16px;z-index:100;background:rgba(0,0,0,.4);backdrop-filter:blur(10px);border:.5px solid var(--border2);border-radius:99px;padding:10px 20px}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);cursor:pointer;transition:all .3s}
+.nav-dot.active{background:var(--green);transform:scale(1.3)}
+.nav-btn{background:none;border:.5px solid var(--border2);color:var(--text2);padding:6px 16px;border-radius:99px;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;transition:all .2s}
+.nav-btn:hover{background:var(--green-dim);border-color:var(--green);color:var(--green-light)}
+.slide-counter{font-size:11px;color:var(--text3);min-width:40px;text-align:center}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes expandW{from{width:0}to{width:100%}}
+@keyframes popIn{from{opacity:0;transform:scale(.75)}to{opacity:1;transform:scale(1)}}
+@keyframes flowR{0%{stroke-dashoffset:30}100%{stroke-dashoffset:0}}
+@keyframes flowL{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-40}}
+@keyframes flowD{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+@keyframes scanLine{0%{top:5%;opacity:.5}100%{top:95%;opacity:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes barGrow{from{width:0}to{width:var(--w)}}
+
+.slide.active .a1{animation:fadeUp .6s ease .1s both}
+.slide.active .a2{animation:fadeUp .6s ease .3s both}
+.slide.active .a3{animation:fadeIn .5s ease .5s both}
+.slide.active .a4{animation:expandW .7s ease .6s both}
+.slide.active .a5{animation:fadeUp .5s ease .8s both}
+.slide.active .a6{animation:fadeUp .5s ease 1s both}
+.slide.active .a7{animation:fadeUp .5s ease 1.2s both}
+.slide.active .a8{animation:fadeUp .5s ease 1.4s both}
+.slide.active .a9{animation:fadeUp .5s ease 1.6s both}
+.slide.active .a10{animation:fadeUp .5s ease 1.8s both}
+.slide.active .p1{animation:popIn .4s ease .9s both}
+.slide.active .p2{animation:popIn .4s ease 1.05s both}
+.slide.active .p3{animation:popIn .4s ease 1.2s both}
+.slide.active .p4{animation:popIn .4s ease 1.35s both}
+.slide.active .p5{animation:popIn .4s ease 1.5s both}
+.slide.active .p6{animation:popIn .4s ease 1.65s both}
+.slide.active .p7{animation:popIn .4s ease 1.8s both}
+.slide.active .p8{animation:popIn .4s ease 1.95s both}
+
+/* COMMON */
+.slide-tag{font-size:10px;letter-spacing:.18em;color:var(--green);text-transform:uppercase;margin-bottom:10px}
+.slide-title{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:600;color:#fff;text-align:center;line-height:1.25;margin-bottom:6px}
+.slide-title span{color:var(--green)}
+.slide-sub{font-size:12px;color:var(--text2);text-align:center;margin-bottom:18px;line-height:1.6;max-width:600px}
+.divline{height:2px;background:var(--green);margin:12px auto 18px;display:block}
+.content{width:100%;max-width:1000px}
+
+/* TAGS */
+.tag{display:inline-block;font-size:10px;font-weight:500;padding:2px 8px;border-radius:99px}
+.tg{background:var(--green-dim);border:.5px solid rgba(29,158,117,.35);color:var(--green-light)}
+.tb{background:rgba(55,138,221,.12);border:.5px solid rgba(55,138,221,.35);color:var(--blue-light)}
+.tc{background:rgba(216,90,48,.1);border:.5px solid rgba(216,90,48,.3);color:var(--coral-light)}
+.tp{background:rgba(127,119,221,.1);border:.5px solid rgba(127,119,221,.3);color:var(--purple-light)}
+.ta{background:rgba(239,159,39,.1);border:.5px solid rgba(239,159,39,.3);color:var(--amber-light)}
+.tr{background:rgba(226,75,74,.1);border:.5px solid rgba(226,75,74,.3);color:var(--red-light)}
+
+/* NODES */
+.node{border-radius:8px;padding:8px 10px;text-align:center;font-size:10px;line-height:1.35;flex-shrink:0}
+.nd-g{background:rgba(29,158,117,.1);border:.5px solid rgba(29,158,117,.35);color:var(--green-light)}
+.nd-b{background:rgba(55,138,221,.1);border:.5px solid rgba(55,138,221,.35);color:var(--blue-light)}
+.nd-c{background:rgba(216,90,48,.1);border:.5px solid rgba(216,90,48,.3);color:var(--coral-light)}
+.nd-p{background:rgba(127,119,221,.1);border:.5px solid rgba(127,119,221,.3);color:var(--purple-light)}
+.nd-a{background:rgba(239,159,39,.08);border:.5px solid rgba(239,159,39,.3);color:var(--amber-light)}
+.nd-r{background:rgba(226,75,74,.08);border:.5px solid rgba(226,75,74,.3);color:var(--red-light)}
+.node-name{font-weight:600;font-size:10px;margin-bottom:2px}
+.node-detail{font-size:8.5px;opacity:.75;line-height:1.3}
+.node svg{display:block;margin:0 auto 4px}
+
+/* SCAN LINE */
+.scan{position:absolute;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--green),transparent);animation:scanLine 4s linear infinite;opacity:0;animation-delay:1s}
+
+</style>
+</head>
+<body>
+
+<div class="slides-wrap">
+
+<!-- ========== SLIDE 1 ========== -->
+<div class="slide active" id="slide-1">
+<div class="grid"></div>
+<div class="scan"></div>
+<style>
+#slide-1 .stats{display:flex;gap:16px;justify-content:center;margin-bottom:22px}
+#slide-1 .stat{background:rgba(29,158,117,.1);border:.5px solid rgba(29,158,117,.3);border-radius:8px;padding:10px 18px;text-align:center}
+#slide-1 .stat-n{font-size:20px;font-weight:600;color:var(--green);display:block}
+#slide-1 .stat-l{font-size:10px;color:var(--text2);display:block;margin-top:2px}
+#slide-1 .pipe{width:100%;max-width:900px}
+#slide-1 .pipe-top{display:flex;align-items:center;justify-content:center;gap:0}
+#slide-1 .pc{background:rgba(255,255,255,.04);border:.5px solid rgba(29,158,117,.3);border-radius:8px;padding:9px 8px;text-align:center;font-size:10px;color:var(--text2);flex-shrink:0;min-width:80px}
+#slide-1 .pc svg{display:block;margin:0 auto 4px}
+#slide-1 .pc.out{border-color:rgba(226,75,74,.4);background:rgba(226,75,74,.06);color:var(--red-light)}
+#slide-1 .model-wrap{background:rgba(29,158,117,.05);border:1px solid rgba(29,158,117,.5);border-radius:10px;padding:8px 10px;min-width:120px;flex-shrink:0}
+#slide-1 .model-lbl{font-size:8px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:5px}
+#slide-1 .model-inner{display:flex;gap:4px;align-items:center;justify-content:center}
+#slide-1 .ms{border-radius:5px;padding:4px 6px;font-size:8.5px;color:var(--text2);text-align:center;min-width:44px;line-height:1.3}
+#slide-1 .ms-t{background:rgba(226,75,74,.15);border:.5px solid rgba(226,75,74,.4)}
+#slide-1 .ms-a{background:rgba(29,158,117,.12);border:.5px solid rgba(29,158,117,.35)}
+#slide-1 .arr{display:flex;align-items:center;padding:0 2px;flex-shrink:0}
+#slide-1 .fb{width:100%;max-width:900px;position:relative}
+</style>
+<div class="slide-tag a1">Driver and Vehicle Standards Agency — Senior Data Scientist Presentation</div>
+<h1 class="slide-title a2">MOT Fraud <span>Risk Scoring</span><br>Detection System</h1>
+<div class="divline a4" style="width:0"></div>
+<p class="slide-sub a5">A continuous, self-improving decision-support system — ranking testers by fraud risk<br>so enforcement effort goes exactly where it matters most</p>
+<div class="stats a6">
+  <div class="stat"><span class="stat-n">~40M</span><span class="stat-l">MOT tests / year</span></div>
+  <div class="stat"><span class="stat-n">~23K</span><span class="stat-l">authorised sites</span></div>
+  <div class="stat"><span class="stat-n">0.5–2%</span><span class="stat-l">estimated fraud rate</span></div>
+  <div class="stat"><span class="stat-n">200K–800K</span><span class="stat-l">irregular certs / year</span></div>
+</div>
+<div class="pipe a7">
+  <div class="pipe-top">
+    <div class="pc">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="1" y="6" width="18" height="10" rx="2" stroke="#1D9E75" stroke-width="1" fill="none"/><path d="M4 6L5.5 2.5L14.5 2.5L16 6" stroke="#1D9E75" stroke-width="1" fill="none"/><circle cx="6" cy="16" r="1.5" stroke="#1D9E75" stroke-width=".8" fill="none"/><circle cx="14" cy="16" r="1.5" stroke="#1D9E75" stroke-width=".8" fill="none"/></svg>
+      MOT data
+    </div>
+    <div class="arr"><svg width="20" height="10" viewBox="0 0 20 10"><line x1="0" y1="5" x2="14" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:flowR .9s linear infinite"/><path d="M12 1.5L18 5L12 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+    <div class="pc">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="14" rx="2" stroke="#1D9E75" stroke-width="1" fill="none"/><line x1="5" y1="8" x2="15" y2="8" stroke="#1D9E75" stroke-width=".9"/><line x1="5" y1="11" x2="12" y2="11" stroke="#1D9E75" stroke-width=".9"/><line x1="5" y1="14" x2="9" y2="14" stroke="#1D9E75" stroke-width=".9"/></svg>
+      Features +<br>Cleaning
+    </div>
+    <div class="arr"><svg width="20" height="10" viewBox="0 0 20 10"><line x1="0" y1="5" x2="14" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:flowR .9s linear infinite;animation-delay:.2s"/><path d="M12 1.5L18 5L12 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+    <div class="model-wrap">
+      <div class="model-lbl">Model</div>
+      <div class="model-inner">
+        <div class="ms ms-t">Training<br>data</div>
+        <div style="color:var(--green);font-size:10px">→</div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div class="ms ms-a" style="font-size:7.5px">Isolation<br>Forest</div>
+          <div class="ms ms-a" style="font-size:7.5px;border-color:rgba(83,74,183,.4)">XGBoost</div>
+        </div>
+      </div>
+    </div>
+    <div class="arr"><svg width="20" height="10" viewBox="0 0 20 10"><line x1="0" y1="5" x2="14" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:flowR .9s linear infinite;animation-delay:.4s"/><path d="M12 1.5L18 5L12 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+    <div class="pc">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="4" rx="1.5" fill="rgba(226,75,74,.25)" stroke="#E24B4A" stroke-width=".8"/><rect x="2" y="10" width="11" height="3.5" rx="1.5" fill="rgba(239,159,39,.2)" stroke="#EF9F27" stroke-width=".8"/><rect x="2" y="15" width="7" height="3" rx="1.5" fill="rgba(29,158,117,.2)" stroke="#1D9E75" stroke-width=".8"/></svg>
+      Risk rank
+    </div>
+    <div class="arr"><svg width="20" height="10" viewBox="0 0 20 10"><line x1="0" y1="5" x2="14" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:flowR .9s linear infinite;animation-delay:.6s"/><path d="M12 1.5L18 5L12 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+    <div class="pc">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="#1D9E75" stroke-width="1" fill="none"/><path d="M3.5 18C3.5 14 16.5 14 16.5 18" stroke="#1D9E75" stroke-width="1" fill="none"/></svg>
+      Enforcement
+    </div>
+    <div class="arr"><svg width="20" height="10" viewBox="0 0 20 10"><line x1="0" y1="5" x2="14" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:flowR .9s linear infinite;animation-delay:.8s"/><path d="M12 1.5L18 5L12 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+    <div class="pc out">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L12 7.5L18 8L14 12L15.5 18L10 15L4.5 18L6 12L2 8L8 7.5Z" stroke="#E24B4A" stroke-width="1" fill="rgba(226,75,74,.15)"/></svg>
+      Outcome<br>fraud/clean
+    </div>
+  </div>
+  <div class="fb a8">
+    <svg width="100%" height="52" viewBox="0 0 900 52" preserveAspectRatio="xMidYMid meet">
+      <defs><marker id="ab" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M8 1.5L2 5L8 8.5" fill="none" stroke="#E24B4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+      <path d="M855 5 L855 36 L400 36 L400 5" fill="none" stroke="#E24B4A" stroke-width="1.2" stroke-dasharray="6 3" marker-end="url(#ab)" style="animation:flowL 1.8s linear infinite"/>
+      <rect x="310" y="26" width="370" height="16" rx="3" fill="#08111f"/>
+      <text x="495" y="38" font-size="9" fill="rgba(226,75,74,.7)" text-anchor="middle" font-family="Inter,sans-serif">outcome logged as new training label → model retrains monthly → detection improves</text>
+    </svg>
+  </div>
+</div>
+<div style="font-size:10px;color:var(--text3);margin-top:8px;opacity:0;animation:fadeIn .5s ease 3s both">DVSA (2024) MOT Testing Statistics · Which? (2019) · Auto Express (2022)</div>
+</div>
+
+<!-- ========== SLIDE 2 ========== -->
+<div class="slide" id="slide-2">
+<div class="grid"></div>
+<style>
+#slide-2 .tier-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:4px}
+#slide-2 .tier-lbl{font-size:8px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;text-align:center;margin-bottom:6px}
+#slide-2 .conn-svg{display:flex;justify-content:center;margin:3px 0}
+#slide-2 .why-row{display:flex;gap:6px;margin:6px 0}
+#slide-2 .wc{flex:1;border-radius:8px;padding:8px 10px;text-align:center}
+#slide-2 .wc-bad{background:rgba(226,75,74,.07);border:.5px solid rgba(226,75,74,.2)}
+#slide-2 .wc-good{background:rgba(29,158,117,.08);border:.5px solid rgba(29,158,117,.3)}
+#slide-2 .wt{font-size:9px;font-weight:600;margin-bottom:3px}
+#slide-2 .wd{font-size:8px;color:var(--text2);line-height:1.4}
+#slide-2 .legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+#slide-2 .li{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text2)}
+#slide-2 .ld{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+#slide-2 .unit-row{display:flex;align-items:center;gap:10px;background:rgba(29,158,117,.05);border:.5px solid rgba(29,158,117,.2);border-radius:8px;padding:8px 14px;margin-top:4px}
+#slide-2 .ur{background:rgba(29,158,117,.15);border:.5px solid rgba(29,158,117,.4);border-radius:6px;padding:5px 10px;font-size:9px;color:var(--green-light);text-align:center;white-space:nowrap;flex-shrink:0}
+#slide-2 .ut{font-size:9px;color:var(--text2);line-height:1.55;flex:1}
+</style>
+<div class="slide-tag a1">Slide 2 of 5 — Data Foundation</div>
+<h2 class="slide-title a2" style="font-size:22px">The data we work with — <span>and what we build from it</span></h2>
+<p class="slide-sub a3" style="margin-bottom:10px;font-size:11px">4 data sources · 1 labelled fraud set · Domain rules · 6 engineered features · Proposed enhancements</p>
+
+<div class="content">
+  <div class="legend a4">
+    <div class="li"><div class="ld" style="background:#1D9E75"></div>DVSA data (unlabelled)</div>
+    <div class="li"><div class="ld" style="background:#378ADD"></div>Known fraud (labelled)</div>
+    <div class="li"><div class="ld" style="background:#D85A30"></div>Domain rules</div>
+    <div class="li"><div class="ld" style="background:#7F77DD"></div>Engineered features</div>
+    <div class="li"><div class="ld" style="background:#EF9F27"></div>Proposed additions</div>
+  </div>
+
+  <div class="tier-lbl" style="color:var(--green);opacity:0;animation:fadeIn .3s ease .85s both">Row 1 — inputs to the system</div>
+  <div class="tier-row">
+    <div class="node nd-g p1"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="5" width="14" height="8" rx="1.5" stroke="#1D9E75" stroke-width=".9" fill="none"/><path d="M4 5L5 2.5L11 2.5L12 5" stroke="#1D9E75" stroke-width=".9" fill="none"/></svg><div class="node-name">MOT tests</div><div class="node-detail">Start/end · Pass/fail<br>Tester · Site</div></div>
+    <div class="node nd-g p2"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="#1D9E75" stroke-width=".9" fill="none"/><line x1="4" y1="6" x2="12" y2="6" stroke="#1D9E75" stroke-width=".7"/><line x1="4" y1="9" x2="9" y2="9" stroke="#1D9E75" stroke-width=".7"/></svg><div class="node-name">Vehicle data</div><div class="node-detail">Make · Engine<br>First reg date</div></div>
+    <div class="node nd-g p3"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5.5" r="2.5" stroke="#1D9E75" stroke-width=".9" fill="none"/><path d="M2 15C2 11.5 14 11.5 14 15" stroke="#1D9E75" stroke-width=".9" fill="none"/></svg><div class="node-name">Tester / Site</div><div class="node-detail">Tester ID<br>Site location</div></div>
+    <div class="node nd-g p4"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 14L2 8L6 4L10 7L14 2L14 14Z" stroke="#1D9E75" stroke-width=".9" fill="rgba(29,158,117,.15)"/></svg><div class="node-name">Test history</div><div class="node-detail">Defects · Fails<br>Odometer readings</div></div>
+    <div class="node nd-b p5"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="#378ADD" stroke-width=".9" fill="none"/><path d="M5 8L7 10L11 6" stroke="#378ADD" stroke-width="1.1" stroke-linecap="round" fill="none"/></svg><div class="node-name">Known fraud</div><div class="node-detail">Small labelled<br>set · fraud = 1</div></div>
+    <div class="node nd-c p6"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="#D85A30" stroke-width=".9" fill="none"/><line x1="4" y1="6" x2="12" y2="6" stroke="#D85A30" stroke-width=".7"/><line x1="4" y1="9" x2="12" y2="9" stroke="#D85A30" stroke-width=".7"/><line x1="4" y1="12" x2="8" y2="12" stroke="#D85A30" stroke-width=".7"/></svg><div class="node-name">Domain rules</div><div class="node-detail">Expert knowledge<br>&lt;20 min · &gt;98% pass</div></div>
+  </div>
+
+  <div class="conn-svg" style="opacity:0;animation:fadeIn .3s ease 1.85s both">
+    <svg width="500" height="16" viewBox="0 0 500 16"><line x1="250" y1="2" x2="250" y2="13" stroke="rgba(127,119,221,.4)" stroke-width="1" stroke-dasharray="3 2" style="animation:flowD .8s linear infinite"/><text x="250" y="13" font-size="7.5" fill="rgba(127,119,221,.5)" text-anchor="middle" font-family="Inter,sans-serif">SQL LEFT JOIN + window functions → features engineered per test</text></svg>
+  </div>
+
+  <div class="tier-lbl" style="color:var(--purple-light);opacity:0;animation:fadeIn .3s ease 1.9s both">Row 2 — features engineered (one enriched row per test)</div>
+  <div class="tier-row" style="opacity:0;animation:fadeIn .4s ease 2s both">
+    <div class="node nd-p"><div class="node-name">Test duration</div><div class="node-detail">End − start<br>45+ min legit</div></div>
+    <div class="node nd-p"><div class="node-name">Pass rate vs peers</div><div class="node-detail">vs same site<br>cohort this month</div></div>
+    <div class="node nd-p"><div class="node-name">Odometer delta</div><div class="node-detail">Mileage change<br>between tests</div></div>
+    <div class="node nd-p"><div class="node-name">Defect rate change</div><div class="node-detail">Sudden drop in<br>defects found</div></div>
+    <div class="node nd-p"><div class="node-name">Retest velocity</div><div class="node-detail">Fail → pass<br>within hours</div></div>
+    <div class="node nd-p"><div class="node-name">Missingness rate</div><div class="node-detail">Blank fields<br>per tester/month</div></div>
+  </div>
+
+  <div class="why-row" style="opacity:0;animation:fadeIn .4s ease 2.6s both">
+    <div class="wc wc-bad"><div class="wt" style="color:rgba(226,75,74,.8)">✕ Tester-day</div><div class="wd">4–8 tests only — too noisy. One short test could be a data error. Averages unstable.</div></div>
+    <div class="wc wc-good"><div class="wt" style="color:var(--green)">✓ Tester-month</div><div class="wd">50–150 tests. Law of large numbers applies. Fraud patterns emerge. Changes caught within 30 days.</div></div>
+    <div class="wc wc-bad"><div class="wt" style="color:rgba(226,75,74,.8)">✕ Tester-year</div><div class="wd">Too coarse. Fraud starting October diluted by 9 months clean behaviour. Detection delayed 12 months.</div></div>
+  </div>
+
+  <div class="conn-svg" style="opacity:0;animation:fadeIn .3s ease 3.1s both">
+    <svg width="500" height="14" viewBox="0 0 500 14"><line x1="250" y1="1" x2="250" y2="11" stroke="rgba(239,159,39,.35)" stroke-width="1" stroke-dasharray="3 2" style="animation:flowD .8s linear infinite"/><text x="250" y="11" font-size="7.5" fill="rgba(239,159,39,.45)" text-anchor="middle" font-family="Inter,sans-serif">additional sources proposed — governance approval required first · not day one</text></svg>
+  </div>
+
+  <div class="tier-row" style="opacity:0;animation:fadeIn .4s ease 3.2s both">
+    <div class="node nd-a"><div class="node-name">ANPR data</div><div class="node-detail">Vehicle location<br>during test window</div><div style="margin-top:3px"><span class="tag ta" style="font-size:7px">Data sharing agreement</span></div></div>
+    <div class="node nd-a"><div class="node-name">Enforcement history</div><div class="node-detail">Prior warnings<br>suspensions</div><div style="margin-top:3px"><span class="tag ta" style="font-size:7px">Internal DVSA only</span></div></div>
+    <div class="node nd-a"><div class="node-name">Complaints data</div><div class="node-detail">Public complaints<br>per site / tester</div><div style="margin-top:3px"><span class="tag ta" style="font-size:7px">GDPR — anonymised</span></div></div>
+  </div>
+
+  <div class="unit-row" style="opacity:0;animation:fadeIn .4s ease 3.7s both">
+    <div style="font-size:9px;color:var(--text3);white-space:nowrap">Many raw<br>tests/month</div>
+    <div style="color:var(--green);font-size:14px;padding:0 8px">→</div>
+    <div class="ur">One enriched row<br>per individual test</div>
+    <div class="ut">Each test row carries both its own features (duration, result, odometer) AND tester context (rolling pass rate, peer comparison, domain rule flag). Isolation Forest reads this enriched row and can flag specific test IDs — not just the tester overall.</div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 3 ========== -->
+<div class="slide" id="slide-3">
+<div class="grid"></div>
+<style>
+#slide-3 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+#slide-3 .box{background:var(--bg2);border:.5px solid var(--border);border-radius:10px;padding:12px 14px}
+#slide-3 .box-title{font-size:11px;font-weight:600;margin-bottom:6px}
+#slide-3 .clean-item{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-top:.5px solid var(--border);font-size:10px;line-height:1.5}
+#slide-3 .clean-item:first-of-type{border-top:none}
+#slide-3 .ci-icon{flex-shrink:0;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;margin-top:1px}
+#slide-3 .ci-flag{background:rgba(239,159,39,.2);color:var(--amber-light)}
+#slide-3 .ci-fix{background:rgba(29,158,117,.2);color:var(--green-light)}
+#slide-3 .ci-keep{background:rgba(127,119,221,.2);color:var(--purple-light)}
+#slide-3 .ci-drop{background:rgba(226,75,74,.15);color:var(--red-light)}
+#slide-3 .ci-text{color:var(--text2)}
+#slide-3 .ci-label{font-weight:600;color:var(--text)}
+#slide-3 .if-box{background:rgba(127,119,221,.06);border:.5px solid rgba(127,119,221,.3);border-radius:10px;padding:12px 14px}
+#slide-3 .prec-box{background:rgba(29,158,117,.06);border:.5px solid rgba(29,158,117,.25);border-radius:8px;padding:10px 14px;margin-top:8px}
+#slide-3 .score-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+#slide-3 .sc{border-radius:6px;padding:5px 8px;font-size:9px;line-height:1.3;flex:1;min-width:80px}
+#slide-3 .sc-h{background:rgba(226,75,74,.1);border:.5px solid rgba(226,75,74,.3);color:var(--red-light)}
+#slide-3 .sc-m{background:rgba(239,159,39,.08);border:.5px solid rgba(239,159,39,.25);color:var(--amber-light)}
+#slide-3 .sc-l{background:rgba(29,158,117,.08);border:.5px solid rgba(29,158,117,.25);color:var(--green-light)}
+#slide-3 .detect-bar{margin-top:10px}
+#slide-3 .db-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+#slide-3 .db-label{font-size:9px;color:var(--text2);min-width:130px;flex-shrink:0}
+#slide-3 .db-wrap{flex:1;background:var(--border);border-radius:99px;height:8px;overflow:hidden}
+#slide-3 .db-fill{height:100%;border-radius:99px;transition:width 1.5s ease}
+#slide-3 .db-val{font-size:9px;font-weight:600;min-width:36px}
+</style>
+<div class="slide-tag a1">Slide 3 of 5 — Data Cleaning + Model Layer 1</div>
+<h2 class="slide-title a2" style="font-size:20px">Cleaning the data — then <span>Isolation Forest</span> scores every test</h2>
+
+<div class="content">
+  <div class="two-col">
+    <div class="box a5">
+      <div class="box-title" style="color:var(--coral-light)">Data cleaning — what we do and why</div>
+      <div class="clean-item"><div class="ci-icon ci-flag">⚑</div><div class="ci-text"><span class="ci-label">Duration impossible (≤0 or &gt;180 min)</span> — set to null + flag duration_invalid=1. The flag is a fraud signal, not just a data error.</div></div>
+      <div class="clean-item"><div class="ci-icon ci-flag">⚑</div><div class="ci-text"><span class="ci-label">Odometer missing</span> — keep null + flag odometer_missing=1. A tester who consistently omits odometer is behaving suspiciously.</div></div>
+      <div class="clean-item"><div class="ci-icon ci-flag">⚑</div><div class="ci-text"><span class="ci-label">Multiple fields missing simultaneously</span> — add total_flags_count column. 5 missing fields = suspicious pattern, not carelessness.</div></div>
+      <div class="clean-item"><div class="ci-icon ci-fix">✓</div><div class="ci-text"><span class="ci-label">Date typos (e.g. 2094 → 2024)</span> — correct where unambiguous, log correction for audit trail. Remaining invalid dates flagged.</div></div>
+      <div class="clean-item"><div class="ci-icon ci-fix">✓</div><div class="ci-text"><span class="ci-label">Time format errors (300am → 15:00)</span> — standardise to 24hr. Out-of-hours tests (before 7am, after 8pm) flagged separately.</div></div>
+      <div class="clean-item"><div class="ci-icon ci-fix">✓</div><div class="ci-text"><span class="ci-label">Categorical inconsistencies</span> — "Independent", "INDEPENDENT", "independent" all standardised to lowercase. Vehicle makes standardised via reference lookup.</div></div>
+      <div class="clean-item"><div class="ci-icon ci-keep">↻</div><div class="ci-text"><span class="ci-label">Duplicates</span> — keep first occurrence, flag is_duplicate=1 on subsequent. Duplicate test submissions are themselves a signal.</div></div>
+      <div class="clean-item"><div class="ci-icon ci-fix">✓</div><div class="ci-text"><span class="ci-label">Feature scaling</span> — StandardScaler applied. Ensures no single feature dominates the model due to larger numerical range.</div></div>
+      <div style="margin-top:8px;font-size:9px;color:var(--text3);font-style:italic">Rule: never drop rows. Every anomaly in the data is a potential signal. Flags become features.</div>
+    </div>
+
+    <div>
+      <div class="if-box a6">
+        <div class="box-title" style="color:var(--purple-light)">Isolation Forest — how it works</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:8px">Reads one enriched row per test. Builds random decision trees. Measures how many splits it takes to isolate each test from all others. Fraudulent tests — unusual combination of short duration, high pass rate, rule fired — get isolated in very few splits. Normal tests take many splits.</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:8px"><strong style="color:var(--purple-light)">Key:</strong> No fraud labels needed. Finds anomalies purely from statistical patterns. Works on the full unlabelled dataset — millions of tests.</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:8px"><strong style="color:var(--purple-light)">Why not LOF or One-Class SVM?</strong> Isolation Forest scales linearly with data size, makes no distributional assumptions, and handles multiple features without degrading. LOF is too slow at DVSA scale. One-Class SVM requires careful tuning.</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6"><strong style="color:var(--purple-light)">Contamination parameter:</strong> Set to 0.01–0.05 (1–5% expected fraud rate), consistent with published DVSA estimates of 0.5–2% irregular certificates.</div>
+        <div class="score-row">
+          <div class="sc sc-h"><strong>Score &gt;0.70</strong><br>HIGH — immediate action</div>
+          <div class="sc sc-m"><strong>Score 0.40–0.70</strong><br>MEDIUM — schedule</div>
+          <div class="sc sc-l"><strong>Score &lt;0.40</strong><br>LOW — not sent</div>
+        </div>
+      </div>
+
+      <div class="prec-box a7">
+        <div style="font-size:11px;font-weight:600;color:var(--green-light);margin-bottom:6px">Validation 1 — Precision@K (during development)</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:8px">Check that confirmed fraud cases from labelled set appear in top K scores. K = enforcement capacity (e.g. 200 cases/month). If 160 of 200 top-scored tests are confirmed fraud → Precision@K = 80%. Without the model: random enforcement finds fraud in 1–2% of visits. The model makes enforcement <strong style="color:var(--green-light)">40–80× more efficient.</strong></div>
+        <div class="detect-bar">
+          <div class="db-row"><div class="db-label">Baseline (random enforcement)</div><div class="db-wrap"><div class="db-fill" style="--w:2%;width:2%;background:var(--border2)"></div></div><div class="db-val" style="color:var(--text3)">1–2%</div></div>
+          <div class="db-row"><div class="db-label">+ Domain rules</div><div class="db-wrap"><div class="db-fill" style="--w:25%;background:var(--coral-light)"></div></div><div class="db-val" style="color:var(--coral-light)">~25%</div></div>
+          <div class="db-row"><div class="db-label">+ Isolation Forest</div><div class="db-wrap"><div class="db-fill" style="--w:70%;background:var(--purple-light)"></div></div><div class="db-val" style="color:var(--purple-light)">~70%</div></div>
+          <div class="db-row"><div class="db-label">+ XGBoost ensemble</div><div class="db-wrap"><div class="db-fill" style="--w:88%;background:var(--green)"></div></div><div class="db-val" style="color:var(--green-light)">~88%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 4 ========== -->
+<div class="slide" id="slide-4">
+<div class="grid"></div>
+<style>
+#slide-4 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+#slide-4 .box{background:var(--bg2);border:.5px solid var(--border);border-radius:10px;padding:12px 14px}
+#slide-4 .bt{font-size:11px;font-weight:600;margin-bottom:6px}
+#slide-4 .formula{background:rgba(255,255,255,.03);border-radius:8px;padding:10px 12px;font-size:10px;color:var(--text2);line-height:1.8;font-family:'Space Grotesk',monospace;margin:8px 0}
+#slide-4 .bar-item{margin-bottom:6px}
+#slide-4 .bi-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+#slide-4 .bi-label{font-size:10px;color:var(--text2)}
+#slide-4 .bi-val{font-size:10px;font-weight:600}
+#slide-4 .bi-wrap{background:var(--border);border-radius:99px;height:7px;overflow:hidden}
+#slide-4 .bi-fill{height:100%;border-radius:99px}
+#slide-4 .rank-list{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+#slide-4 .rank-item{display:flex;gap:10px;align-items:flex-start;background:var(--bg3);border-radius:7px;padding:7px 10px}
+#slide-4 .rank-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap}
+#slide-4 .rb-h{background:rgba(226,75,74,.15);color:var(--red-light)}
+#slide-4 .rb-m{background:rgba(239,159,39,.12);color:var(--amber-light)}
+#slide-4 .rank-text{font-size:10px;color:var(--text2);line-height:1.5}
+#slide-4 .gov-box{background:rgba(55,138,221,.06);border:.5px solid rgba(55,138,221,.25);border-radius:8px;padding:10px 14px;margin-top:8px}
+</style>
+<div class="slide-tag a1">Slide 4 of 5 — XGBoost + Composite Score + Enforcement Output</div>
+<h2 class="slide-title a2" style="font-size:20px"><span>XGBoost</span> adds supervision — then scores combine into one risk ranking</h2>
+
+<div class="content">
+  <div class="two-col">
+    <div>
+      <div class="box a5">
+        <div class="bt" style="color:#AFA9EC">XGBoost — supervised layer</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:8px">Trains on confirmed fraud cases (labelled set). Learns which feature combinations characterise confirmed fraud. Outputs fraud probability per test. Complements Isolation Forest — catches tests that resemble known fraud even if not statistically unusual.</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:8px"><strong style="color:var(--purple-light)">Why XGBoost?</strong> Handles mixed feature types, robust to outliers, fast training, produces feature importance scores — you can show enforcement which features drove the flag.</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6"><strong style="color:var(--purple-light)">Small labelled set?</strong> Use stratified k-fold cross-validation. Prevents overfitting. Validates model performs on unseen data despite small sample.</div>
+        <div style="margin-top:8px;font-size:9px;color:var(--text3)">Confusion matrix produced here — true positives, false positives, false negatives tracked. False negatives weighted more heavily — missing fraud is worse than a wasted visit.</div>
+      </div>
+
+      <div class="box a6" style="margin-top:8px">
+        <div class="bt" style="color:var(--amber-light)">Composite risk score — three signals combined</div>
+        <div class="formula">
+          composite = (0.50 × isolation_forest_score)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (0.30 × xgboost_fraud_probability)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (0.20 × domain_rule_fired)
+        </div>
+        <div style="font-size:9px;color:var(--text3);margin-bottom:8px">Weights tuned using confirmed fraud cases. Reviewed every 3 months as feedback loop accumulates new labels.</div>
+
+        <div style="font-size:10px;color:var(--text2);font-weight:600;margin-bottom:6px">Example — Test ID 004 · Tester T-0042</div>
+        <div class="bar-item">
+          <div class="bi-head"><div class="bi-label">Isolation Forest</div><div class="bi-val" style="color:var(--purple-light)">0.94</div></div>
+          <div class="bi-wrap"><div class="bi-fill" style="width:94%;background:var(--purple)"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bi-head"><div class="bi-label">XGBoost</div><div class="bi-val" style="color:#534AB7">0.88</div></div>
+          <div class="bi-wrap"><div class="bi-fill" style="width:88%;background:#534AB7"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bi-head"><div class="bi-label">Domain rule fired</div><div class="bi-val" style="color:var(--coral-light)">1.00</div></div>
+          <div class="bi-wrap"><div class="bi-fill" style="width:100%;background:var(--coral)"></div></div>
+        </div>
+        <div class="bar-item" style="margin-top:4px">
+          <div class="bi-head"><div class="bi-label" style="font-weight:600;color:var(--text)">Final composite score</div><div class="bi-val" style="color:var(--amber-light)">0.91 HIGH</div></div>
+          <div class="bi-wrap"><div class="bi-fill" style="width:91%;background:var(--amber)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="box a7">
+        <div class="bt" style="color:var(--blue-light)">Enforcement output — ranked list</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:8px">Enforcement receives only HIGH and MEDIUM risk cases. Ranked by composite tester score. Each entry shows: tester ID, score, specific flagged test IDs, and plain English reason for each flag. LOW risk never sent — enforcement time is too valuable.</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:8px"><strong style="color:var(--blue-light)">Tester ranking combines:</strong> count of flagged tests this month + severity of worst test + historical months flagged. A tester with 1 catastrophic test + 3 months history outranks a first-time tester with 5 moderate tests.</div>
+        <div class="rank-list">
+          <div class="rank-item">
+            <span class="rank-badge rb-h">Rank 1 · 0.94</span>
+            <span class="rank-text">Tester T-0042 — 12 flagged tests. Score 0.94. Flagged 3 consecutive months. Test IDs 004, 007, 031 attached as evidence. Reason: avg duration 28 min, pass rate 97.8% vs peer 81.2%, 3 domain rules fired.</span>
+          </div>
+          <div class="rank-item">
+            <span class="rank-badge rb-h">Rank 2 · 0.81</span>
+            <span class="rank-text">Tester T-0071 — 5 flagged tests. Score 0.81. First time flagged. Test IDs 012, 019 attached. Reason: retest velocity — fail to pass same site in 2 hours, odometer decrease detected.</span>
+          </div>
+          <div class="rank-item">
+            <span class="rank-badge rb-m">Rank 3 · 0.54</span>
+            <span class="rank-text">Tester T-0103 — 2 flagged tests. Score 0.54. No history. Odometer missing on both tests. Statistically unusual but no domain rule fired. Monitor — schedule investigation.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="gov-box a8">
+        <div style="font-size:11px;font-weight:600;color:var(--blue-light);margin-bottom:5px">Anonymisation + Governance</div>
+        <div style="font-size:10px;color:var(--text2);line-height:1.6">The model works entirely on test IDs and tester IDs — anonymous identifiers. No names, addresses, or personal details in the analytical pipeline. Consistent with GDPR data minimisation and purpose limitation principles. Identifying details accessed only at point of enforcement investigation through DVSA's existing governed access process — consistent with how NHS patient IDs work in clinical systems. Lawful basis: DVSA's regulatory function to detect fraud in MOT testing.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ========== SLIDE 5 ========== -->
+<div class="slide" id="slide-5">
+<div class="grid"></div>
+<style>
+#slide-5 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+#slide-5 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+#slide-5 .box{background:var(--bg2);border:.5px solid var(--border);border-radius:10px;padding:11px 14px}
+#slide-5 .bt{font-size:11px;font-weight:600;margin-bottom:6px}
+#slide-5 .item{font-size:10px;color:var(--text2);padding:3px 0;border-top:.5px solid var(--border);line-height:1.5}
+#slide-5 .item:first-of-type{border-top:none}
+#slide-5 .item strong{color:var(--text)}
+#slide-5 .closing{background:linear-gradient(135deg,rgba(29,158,117,.12),rgba(29,158,117,.04));border:1px solid rgba(29,158,117,.4);border-radius:12px;padding:16px 20px;text-align:center;margin-top:6px}
+#slide-5 .closing-text{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:500;color:#fff;line-height:1.6}
+#slide-5 .closing-text span{color:var(--green)}
+#slide-5 .future-item{font-size:10px;color:var(--text2);padding:4px 0;border-top:.5px solid var(--border);line-height:1.5}
+#slide-5 .future-item:first-of-type{border-top:none}
+#slide-5 .future-item strong{color:var(--text)}
+</style>
+<div class="slide-tag a1">Slide 5 of 5 — Validation · Trial · Future</div>
+<h2 class="slide-title a2" style="font-size:20px">Validation, controlled trial — and <span>how the system keeps improving</span></h2>
+
+<div class="content">
+  <div class="three-col">
+    <div class="box a5">
+      <div class="bt" style="color:var(--green-light)">Validation 1 — Development</div>
+      <div class="item"><strong>Precision@K check</strong> — confirmed fraud cases must appear in top K anomaly scores. If not, features need improvement. Happens before deployment.</div>
+      <div class="item"><strong>Confusion matrix (XGBoost)</strong> — true positives, false positives, false negatives tracked. False negatives weighted more heavily.</div>
+      <div class="item"><strong>Cross-validation</strong> — stratified k-fold on labelled set. Prevents overfitting despite small confirmed fraud sample.</div>
+      <div class="item"><strong>Score distribution check</strong> — confirmed fraud should cluster in top score percentile. Clear separation = model is working.</div>
+    </div>
+
+    <div class="box a6">
+      <div class="bt" style="color:var(--amber-light)">Validation 2 — Controlled Trial</div>
+      <div class="item"><strong>Region A</strong> — uses the model. Enforcement guided by ranked risk list.</div>
+      <div class="item"><strong>Region B</strong> — baseline. Traditional enforcement methods, no model.</div>
+      <div class="item"><strong>Duration</strong> — 3 months live operation. Long enough for statistically meaningful comparison.</div>
+      <div class="item"><strong>Metric</strong> — confirmed fraud found per enforcement inspection in each region. If Region A significantly higher → model validated for full rollout.</div>
+      <div class="item"><strong>SME involvement</strong> — experienced enforcement officers in Region A review flags, provide verdicts, inform threshold tuning.</div>
+      <div style="margin-top:6px;font-size:10px;color:var(--green-light);font-weight:500">Expected result: Region A finds 40–80× more fraud per visit than Region B</div>
+    </div>
+
+    <div class="box a7">
+      <div class="bt" style="color:var(--blue-light)">Feedback Loop — Monthly Retraining</div>
+      <div class="item"><strong>Enforcement verdict logged</strong> — confirmed fraud or false alarm recorded against test ID.</div>
+      <div class="item"><strong>New label added</strong> — tester-month record gets confirmed fraud = 1. Enters training data.</div>
+      <div class="item"><strong>Model retrains monthly</strong> — XGBoost gets stronger as labelled set grows. Weights retuned. Thresholds adjusted.</div>
+      <div class="item"><strong>New fraud methods detected</strong> — Isolation Forest catches novel patterns. Feedback loop teaches XGBoost to recognise them next time.</div>
+      <div class="item"><strong>Domain rules updateable</strong> — if DVSA changes threshold (e.g. 20 min → 30 min), rule updates immediately. No retraining needed for rule changes.</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="box a8">
+      <div class="bt" style="color:var(--purple-light)">LLM Agent — Enforcement Intelligence Assistant</div>
+      <div class="future-item"><strong>Natural language queries</strong> — officer asks "show all testers flagged 3+ consecutive months in South West." Agent queries database and responds in plain English.</div>
+      <div class="future-item"><strong>Automated briefing drafts</strong> — when HIGH risk tester flagged, agent auto-drafts investigation report. Officer reviews, corrects, submits. Saves 30–60 min per case.</div>
+      <div class="future-item"><strong>Anomaly explanations</strong> — officer asks "why is test 004 flagged HIGH?" Agent translates SHAP values into plain English: "duration 9 min is 94th percentile shortest for this vehicle class, combined with tester pass rate 16 points above peer average."</div>
+      <div class="future-item"><strong>Human always decides</strong> — agent brings information. Officer makes the enforcement judgement. Not replaced — empowered.</div>
+    </div>
+
+    <div class="box a9">
+      <div class="bt" style="color:var(--amber-light)">Future Enhancements — Governance Required First</div>
+      <div class="future-item"><strong>ANPR integration</strong> — confirms vehicle physically present at test site during test window. Catches ghost tests. Requires data sharing agreement with DVLA/National Highways.</div>
+      <div class="future-item"><strong>CCTV + Convolutional Autoencoders</strong> — learns what legitimate MOT inspection looks like visually. Flags footage where tester barely inspects vehicle. Requires ICO guidance on automated video processing.</div>
+      <div class="future-item"><strong>Network analysis</strong> — detects organised fraud rings where garages, mechanics, and testers work together. Requires graph database infrastructure.</div>
+      <div class="future-item"><strong>All enhancements</strong> — require DPIA, lawful basis under UK GDPR Article 6, proportionality review. Privacy intrusion must be proportionate to fraud detection benefit.</div>
+    </div>
+  </div>
+
+  <div class="closing a10">
+    <div class="closing-text">"This system is designed to be <span>deployable with what DVSA already has</span>, <span>explainable to enforcement officers and courts</span>, and <span>self-improving</span> — so the longer it runs, the better it gets."</div>
+  </div>
+</div>
+</div>
+
+</div><!-- end slides-wrap -->
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn" onclick="changeSlide(-1)">← Prev</button>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="nav-dot active" onclick="goToSlide(1)"></div>
+    <div class="nav-dot" onclick="goToSlide(2)"></div>
+    <div class="nav-dot" onclick="goToSlide(3)"></div>
+    <div class="nav-dot" onclick="goToSlide(4)"></div>
+    <div class="nav-dot" onclick="goToSlide(5)"></div>
+  </div>
+  <div class="slide-counter" id="counter">1 / 5</div>
+  <button class="nav-btn" onclick="changeSlide(1)">Next →</button>
+</nav>
+
+<script>
+let current = 1;
+const total = 5;
+
+function goToSlide(n) {
+  document.getElementById('slide-' + current).classList.remove('active');
+  document.querySelectorAll('.nav-dot')[current-1].classList.remove('active');
+  current = n;
+  document.getElementById('slide-' + current).classList.add('active');
+  document.querySelectorAll('.nav-dot')[current-1].classList.add('active');
+  document.getElementById('counter').textContent = current + ' / ' + total;
+}
+
+function changeSlide(dir) {
+  let next = current + dir;
+  if(next < 1) next = 1;
+  if(next > total) next = total;
+  goToSlide(next);
+}
+
+document.addEventListener('keydown', function(e) {
+  if(e.key === 'ArrowRight' || e.key === ' ') changeSlide(1);
+  if(e.key === 'ArrowLeft') changeSlide(-1);
+});
+</script>
+</body>
+</html>

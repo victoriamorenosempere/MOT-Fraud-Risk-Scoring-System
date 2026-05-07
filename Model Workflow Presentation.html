@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DVSA MOT Fraud — Victoria Moreno Sempere</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#07101e;font-family:sans-serif}
+.deck{width:100%;height:100vh;position:relative}
+iframe.slide{position:absolute;inset:0;width:100%;height:100%;border:none;opacity:0;pointer-events:none;transition:opacity .4s ease}
+iframe.slide.active{opacity:1;pointer-events:all}
+.nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;z-index:9999;background:rgba(7,16,30,.92);backdrop-filter:blur(12px);border:.5px solid rgba(255,255,255,.18);border-radius:99px;padding:8px 18px}
+.ndot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.18);cursor:pointer;transition:all .3s;flex-shrink:0}
+.ndot.on{background:#1D9E75;transform:scale(1.4)}
+.nbtn{background:none;border:.5px solid rgba(255,255,255,.2);color:rgba(159,225,203,.85);padding:5px 14px;border-radius:99px;cursor:pointer;font-size:12px;font-family:sans-serif;transition:all .2s}
+.nbtn:hover{background:rgba(29,158,117,.18);border-color:#1D9E75;color:#9FE1CB}
+.ncnt{font-size:11px;color:rgba(159,225,203,.45);min-width:36px;text-align:center}
+.slbl{font-size:9px;color:rgba(159,225,203,.3);letter-spacing:.1em;text-transform:uppercase;min-width:100px;text-align:center}
+</style>
+</head>
+<body>
+<div class="deck">
+  <iframe class="slide active" id="s1"></iframe>
+  <iframe class="slide" id="s2"></iframe>
+  <iframe class="slide" id="s3"></iframe>
+  <iframe class="slide" id="s4"></iframe>
+  <iframe class="slide" id="s5"></iframe>
+</div>
+
+<nav class="nav">
+  <button class="nbtn" onclick="go(-1)">&#8592; Prev</button>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="ndot on" onclick="jump(1)"></div>
+    <div class="ndot" onclick="jump(2)"></div>
+    <div class="ndot" onclick="jump(3)"></div>
+    <div class="ndot" onclick="jump(4)"></div>
+    <div class="ndot" onclick="jump(5)"></div>
+  </div>
+  <div class="ncnt" id="cnt">1 / 5</div>
+  <div class="slbl" id="slbl">Introduction</div>
+  <button class="nbtn" onclick="go(1)">Next &#8594;</button>
+</nav>
+
+<script>
+const labels = ['Introduction','Data Foundation','Isolation Forest','XGBoost + Scoring','The Living System'];
+let cur = 1;
+
+const slideContents = [
+  `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DVSA Slide 1 — Final</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g:#1D9E75;--gl:#9FE1CB;--gd:rgba(29,158,117,.13);
+  --r:#E24B4A;--rl:#F09595;
+  --bg:#07101e;--br:rgba(255,255,255,.07);--br2:rgba(255,255,255,.13);
+  --t:rgba(255,255,255,.94);--t2:rgba(159,225,203,.72);--t3:rgba(159,225,203,.36);
+}
+html,body{width:100%;height:100vh;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t);display:flex;align-items:center;justify-content:center}
+.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(29,158,117,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(29,158,117,.055) 1px,transparent 1px);background-size:42px 42px;pointer-events:none}
+.scan{position:fixed;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--g),transparent);animation:scan 5s linear infinite;opacity:0;animation-delay:1.2s}
+.slide{position:relative;z-index:1;width:100%;max-width:1060px;padding:30px 48px;display:flex;flex-direction:column;align-items:center}
+
+@keyframes fU{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fI{from{opacity:0}to{opacity:1}}
+@keyframes xW{from{width:0}to{width:220px}}
+@keyframes fR{0%{stroke-dashoffset:28}100%{stroke-dashoffset:0}}
+@keyframes fL{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-36}}
+@keyframes scan{0%{top:3%;opacity:.4}100%{top:97%;opacity:0}}
+
+.a1{animation:fU .55s ease .1s both}
+.a2{animation:fU .55s ease .28s both}
+.a3{animation:fI .45s ease .45s both}
+.a4{animation:xW .75s ease .55s both;display:block}
+.a5{animation:fU .5s ease .8s both}
+.a6{animation:fU .5s ease 1s both}
+.a7{animation:fU .5s ease 1.2s both}
+.a8{animation:fI .5s ease 3s both}
+
+/* TOP SECTION */
+.stag{font-size:10px;letter-spacing:.18em;color:var(--g);text-transform:uppercase;margin-bottom:10px}
+.stit{font-size:30px;font-weight:600;color:#fff;text-align:center;line-height:1.25;margin-bottom:6px}
+.stit em{color:var(--g);font-style:normal}
+.ssub{font-size:13px;color:var(--t2);text-align:center;line-height:1.65;max-width:640px;margin-bottom:22px}
+.dline{height:2px;background:var(--g);width:0;margin:0 auto 22px}
+
+/* STATS — TWO ROWS */
+.stats-wrap{display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:26px}
+.stats-row{display:flex;gap:12px;justify-content:center}
+.stat{border-radius:10px;padding:10px 20px;text-align:center;flex-shrink:0}
+.st-g{background:var(--gd);border:.5px solid rgba(29,158,117,.28)}
+.st-r{background:rgba(226,75,74,.08);border:.5px solid rgba(226,75,74,.28)}
+.sn{font-size:22px;font-weight:600;display:block}
+.sn-g{color:var(--g)}
+.sn-r{color:var(--rl)}
+.sl{font-size:10px;color:var(--t2);display:block;margin-top:2px;line-height:1.4}
+
+/* PIPELINE */
+.pipe{width:100%;max-width:940px}
+.pipe-row{display:flex;align-items:center;justify-content:center}
+.pc{background:rgba(255,255,255,.04);border:.5px solid rgba(29,158,117,.28);border-radius:9px;padding:10px 9px;text-align:center;font-size:10px;color:var(--t2);flex-shrink:0;min-width:84px}
+.pc svg{display:block;margin:0 auto 4px}
+.pc-sub{font-size:8.5px;color:var(--t3);display:block;margin-top:2px}
+.pc-out{border-color:rgba(226,75,74,.38);background:rgba(226,75,74,.06);color:var(--rl)}
+.model-box{background:rgba(29,158,117,.05);border:1px solid rgba(29,158,117,.45);border-radius:10px;padding:8px 10px;flex-shrink:0;min-width:138px}
+.ml{font-size:8px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:5px}
+.mi{display:flex;gap:4px;align-items:center;justify-content:center}
+.ms{border-radius:5px;padding:4px 6px;font-size:8px;text-align:center;min-width:46px;line-height:1.35}
+.ms-t{background:rgba(226,75,74,.14);border:.5px solid rgba(226,75,74,.38);color:rgba(240,153,123,.9)}
+.ms-if{background:rgba(127,119,221,.14);border:.5px solid rgba(127,119,221,.35);color:#AFA9EC}
+.ms-xg{background:rgba(83,74,183,.14);border:.5px solid rgba(83,74,183,.4);color:#C4C0F5}
+.arr{display:flex;align-items:center;padding:0 2px;flex-shrink:0}
+
+/* FEEDBACK */
+.fb{width:100%;position:relative}
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="scan"></div>
+
+<div class="slide">
+
+  <div class="stag a1">Driver and Vehicle Standards Agency</div>
+  <h1 class="stit a2">MOT Fraud <em>Risk Scoring</em><br>Detection System</h1>
+  <div class="dline a4"></div>
+  <p class="ssub a3">Ranking suspicious <em>tests and testers</em> — so enforcement effort goes exactly where it matters most</p>
+
+  <!-- STATS TWO ROWS -->
+  <div class="stats-wrap a5">
+    <!-- ROW 1 — operational scale (green) -->
+    <div class="stats-row">
+      <div class="stat st-g">
+        <span class="sn sn-g">32M+</span>
+        <span class="sl">MOT tests per year<br><span style="font-size:9px;color:var(--t3)">DVSA Matters of Testing, gov.uk</span></span>
+      </div>
+      <div class="stat st-g">
+        <span class="sn sn-g">67K</span>
+        <span class="sl">authorised testers<br><span style="font-size:9px;color:var(--t3)">DVSA Matters of Testing, gov.uk</span></span>
+      </div>
+    </div>
+    <!-- ROW 2 — fraud scale (red) -->
+    <div class="stats-row">
+      <div class="stat st-r">
+        <span class="sn sn-r">1,809</span>
+        <span class="sl">confirmed fraud cases detected in 2024<br><span style="font-size:9px;color:rgba(240,153,123,.55)">DVSA FOI data · Garage Wire, 2025</span></span>
+      </div>
+      <div class="stat st-r">
+        <span class="sn sn-r">+85%</span>
+        <span class="sl">rise in one year (2023 → 2024)<br><span style="font-size:9px;color:rgba(240,153,123,.55)">976 cases in 2023 → 1,809 in 2024</span></span>
+      </div>
+      <div class="stat st-r">
+        <span class="sn sn-r">80%</span>
+        <span class="sl">of all fraud = ghost MOTs (2024)<br><span style="font-size:9px;color:rgba(240,153,123,.55)">DVSA published statement, gov.uk</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="pipe a6">
+    <div class="pipe-row">
+
+      <!-- MOT DATA -->
+      <div class="pc">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="1" y="7" width="20" height="11" rx="2" stroke="#1D9E75" stroke-width="1" fill="none"/>
+          <path d="M5 7L6.5 3L15.5 3L17 7" stroke="#1D9E75" stroke-width="1" fill="none"/>
+          <circle cx="7" cy="18" r="1.8" stroke="#1D9E75" stroke-width=".9" fill="none"/>
+          <circle cx="15" cy="18" r="1.8" stroke="#1D9E75" stroke-width=".9" fill="none"/>
+        </svg>
+        MOT data
+        <span class="pc-sub">4 source tables</span>
+      </div>
+
+      <div class="arr"><svg width="24" height="10" viewBox="0 0 24 10"><line x1="0" y1="5" x2="18" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite"/><path d="M15 1.5L21 5L15 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+
+      <!-- FEATURES / MOT RESULTS -->
+      <div class="pc">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="2" y="3" width="18" height="16" rx="2" stroke="#1D9E75" stroke-width="1" fill="none"/>
+          <line x1="5" y1="8" x2="17" y2="8" stroke="#1D9E75" stroke-width=".9"/>
+          <line x1="5" y1="12" x2="14" y2="12" stroke="#1D9E75" stroke-width=".9"/>
+          <line x1="5" y1="16" x2="10" y2="16" stroke="#1D9E75" stroke-width=".9"/>
+        </svg>
+        Features
+        <span class="pc-sub">MOT test results</span>
+      </div>
+
+      <div class="arr"><svg width="24" height="10" viewBox="0 0 24 10"><line x1="0" y1="5" x2="18" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite;animation-delay:.2s"/><path d="M15 1.5L21 5L15 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+
+      <!-- MODEL -->
+      <div class="model-box">
+        <div class="ml">Model</div>
+        <div class="mi">
+          <div class="ms ms-t">Training<br>data</div>
+          <div style="color:var(--g);font-size:11px;padding:0 2px">→</div>
+          <div style="display:flex;flex-direction:column;gap:3px">
+            <div class="ms ms-if">Isolation<br>Forest</div>
+            <div class="ms ms-xg">XGBoost</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arr"><svg width="24" height="10" viewBox="0 0 24 10"><line x1="0" y1="5" x2="18" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite;animation-delay:.4s"/><path d="M15 1.5L21 5L15 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+
+      <!-- RISK RANKING -->
+      <div class="pc">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="2" y="4" width="18" height="4" rx="1.5" fill="rgba(226,75,74,.25)" stroke="#E24B4A" stroke-width=".8"/>
+          <rect x="2" y="10" width="13" height="4" rx="1.5" fill="rgba(239,159,39,.2)" stroke="#EF9F27" stroke-width=".8"/>
+          <rect x="2" y="16" width="8" height="3.5" rx="1.5" fill="rgba(29,158,117,.2)" stroke="#1D9E75" stroke-width=".8"/>
+        </svg>
+        Risk ranking
+        <span class="pc-sub">tests + testers</span>
+      </div>
+
+      <div class="arr"><svg width="24" height="10" viewBox="0 0 24 10"><line x1="0" y1="5" x2="18" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite;animation-delay:.6s"/><path d="M15 1.5L21 5L15 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+
+      <!-- ENFORCEMENT -->
+      <div class="pc">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="7.5" r="3.2" stroke="#1D9E75" stroke-width="1" fill="none"/>
+          <path d="M4 20C4 15.5 18 15.5 18 20" stroke="#1D9E75" stroke-width="1" fill="none"/>
+        </svg>
+        Enforcement
+        <span class="pc-sub">investigates</span>
+      </div>
+
+      <div class="arr"><svg width="24" height="10" viewBox="0 0 24 10"><line x1="0" y1="5" x2="18" y2="5" stroke="#1D9E75" stroke-width="1.1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite;animation-delay:.8s"/><path d="M15 1.5L21 5L15 8.5" fill="none" stroke="#1D9E75" stroke-width="1.1"/></svg></div>
+
+      <!-- OUTCOME -->
+      <div class="pc pc-out">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M11 2L13.2 8.5L20 9L15.5 13.5L17 20L11 16.5L5 20L6.5 13.5L2 9L8.8 8.5Z" stroke="#E24B4A" stroke-width="1" fill="rgba(226,75,74,.15)"/>
+        </svg>
+        Outcome
+        <span class="pc-sub" style="color:rgba(240,153,123,.55)">fraud / clean</span>
+      </div>
+
+    </div>
+
+    <!-- FEEDBACK LOOP -->
+    <div class="fb a7">
+      <svg width="100%" height="52" viewBox="0 0 940 52" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="ab" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M8 1.5L2 5L8 8.5" fill="none" stroke="#E24B4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+        <path d="M898 5 L898 36 L420 36 L420 5"
+          fill="none" stroke="#E24B4A" stroke-width="1.2"
+          stroke-dasharray="5 3"
+          marker-end="url(#ab)"
+          style="animation:fL 1.8s linear infinite"/>
+        <rect x="330" y="26" width="365" height="16" rx="3" fill="#07101e"/>
+        <text x="512" y="38" font-size="9" fill="rgba(226,75,74,.65)" text-anchor="middle" font-family="DM Sans,sans-serif">
+          outcome → new training label → training data grows → model retrains monthly
+        </text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- SOURCE LINE -->
+  <div class="a8" style="font-size:8.5px;color:var(--t3);text-align:center;margin-top:4px">
+    Sources: DVSA Matters of Testing (gov.uk) · DVSA FOI data via Garage Wire (2025) · DVSA published statement on ghost MOTs (gov.uk)
+  </div>
+
+</div>
+</body>
+</html>
+`,
+  `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DVSA Slide 2 — Data Foundation</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g:#1D9E75;--gl:#9FE1CB;--gd:rgba(29,158,117,.15);
+  --b:#378ADD;--bl:#85B7EB;
+  --c:#D85A30;--cl:#F0997B;
+  --p:#7F77DD;--pl:#AFA9EC;
+  --a:#EF9F27;--al:#FAC775;
+  --r:#E24B4A;--rl:#F09595;
+  --bg:#07101e;--bg2:rgba(255,255,255,.03);--bg3:rgba(255,255,255,.055);
+  --br:rgba(255,255,255,.07);--br2:rgba(255,255,255,.13);
+  --t:rgba(255,255,255,.93);--t2:rgba(159,225,203,.72);--t3:rgba(159,225,203,.38);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t)}
+.slides{width:100%;height:100vh;position:relative}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 52px;opacity:0;pointer-events:none;transition:opacity .5s;overflow:hidden}
+.slide.active{opacity:1;pointer-events:all}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(29,158,117,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(29,158,117,.055) 1px,transparent 1px);background-size:42px 42px;pointer-events:none}
+.nav{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;z-index:100;background:rgba(7,16,30,.8);backdrop-filter:blur(12px);border:.5px solid var(--br2);border-radius:99px;padding:9px 18px}
+.ndot{width:7px;height:7px;border-radius:50%;background:var(--br2);cursor:pointer;transition:all .3s}
+.ndot.on{background:var(--g);transform:scale(1.4)}
+.nbtn{background:none;border:.5px solid var(--br2);color:var(--t2);padding:5px 14px;border-radius:99px;cursor:pointer;font-size:11px;font-family:'DM Sans',sans-serif;transition:all .2s}
+.nbtn:hover{background:var(--gd);border-color:var(--g);color:var(--gl)}
+.ncnt{font-size:10px;color:var(--t3);min-width:36px;text-align:center}
+
+@keyframes fU{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fI{from{opacity:0}to{opacity:1}}
+@keyframes xW{from{width:0}to{width:var(--tw,100%)}}
+@keyframes pI{from{opacity:0;transform:scale(.78)}to{opacity:1;transform:scale(1)}}
+@keyframes fR{0%{stroke-dashoffset:28}100%{stroke-dashoffset:0}}
+@keyframes fL{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-36}}
+@keyframes fD{0%{stroke-dashoffset:18}100%{stroke-dashoffset:0}}
+@keyframes scan{0%{top:4%;opacity:.45}100%{top:96%;opacity:0}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes orbit{from{transform:rotate(0deg) translateX(70px) rotate(0deg)}to{transform:rotate(360deg) translateX(70px) rotate(-360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes grow{from{height:0}to{height:var(--h)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+
+.slide.active .a1{animation:fU .55s ease .1s both}
+.slide.active .a2{animation:fU .55s ease .25s both}
+.slide.active .a3{animation:fI .45s ease .4s both}
+.slide.active .a4{animation:xW .7s ease .5s both}
+.slide.active .a5{animation:fU .5s ease .7s both}
+.slide.active .a6{animation:fU .5s ease .9s both}
+.slide.active .a7{animation:fU .5s ease 1.1s both}
+.slide.active .a8{animation:fU .5s ease 1.3s both}
+.slide.active .a9{animation:fU .5s ease 1.5s both}
+.slide.active .a10{animation:fU .5s ease 1.7s both}
+.slide.active .p1{animation:pI .38s ease .85s both}
+.slide.active .p2{animation:pI .38s ease 1s both}
+.slide.active .p3{animation:pI .38s ease 1.15s both}
+.slide.active .p4{animation:pI .38s ease 1.3s both}
+.slide.active .p5{animation:pI .38s ease 1.45s both}
+.slide.active .p6{animation:pI .38s ease 1.6s both}
+.slide.active .p7{animation:pI .38s ease 1.75s both}
+.slide.active .p8{animation:pI .38s ease 1.9s both}
+.slide.active .s1{animation:slideIn .4s ease 1s both}
+.slide.active .s2{animation:slideIn .4s ease 1.2s both}
+.slide.active .s3{animation:slideIn .4s ease 1.4s both}
+.slide.active .s4{animation:slideIn .4s ease 1.6s both}
+.slide.active .s5{animation:slideIn .4s ease 1.8s both}
+
+.stag{font-size:9px;letter-spacing:.18em;color:var(--g);text-transform:uppercase;margin-bottom:8px}
+.stit{font-family:'DM Sans',sans-serif;font-size:26px;font-weight:600;color:#fff;text-align:center;line-height:1.25;margin-bottom:5px}
+.stit em{color:var(--g);font-style:normal}
+.ssub{font-size:11.5px;color:var(--t2);text-align:center;margin-bottom:14px;line-height:1.6;max-width:580px}
+.dline{height:2px;background:var(--g);margin:10px auto 14px;display:block}
+.wrap{width:100%;max-width:1020px}
+
+.nd{border-radius:8px;padding:8px 10px;text-align:center;font-size:9.5px;line-height:1.35;flex-shrink:0}
+.ng{background:rgba(29,158,117,.1);border:.5px solid rgba(29,158,117,.32);color:var(--gl)}
+.nb{background:rgba(55,138,221,.1);border:.5px solid rgba(55,138,221,.32);color:var(--bl)}
+.nc{background:rgba(216,90,48,.1);border:.5px solid rgba(216,90,48,.28);color:var(--cl)}
+.np{background:rgba(127,119,221,.1);border:.5px solid rgba(127,119,221,.28);color:var(--pl)}
+.na{background:rgba(239,159,39,.08);border:.5px solid rgba(239,159,39,.28);color:var(--al)}
+.nr{background:rgba(226,75,74,.08);border:.5px solid rgba(226,75,74,.28);color:var(--rl)}
+.nd-nm{font-weight:600;font-size:9.5px;margin-bottom:2px}
+.nd-dt{font-size:8px;opacity:.75;line-height:1.3}
+.nd svg{display:block;margin:0 auto 3px}
+
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<!-- S2 DATA MAP -->
+<div class="slide active" id="s2">
+<div class="grid"></div>
+<div class="stag a1">Slide 2 of 5 — Data Foundation</div>
+<h2 class="stit a2" style="font-size:22px">The data we connect — <em>and the unit we create</em></h2>
+<div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;opacity:0;animation:fI .4s ease .4s both"><div style="display:flex;align-items:center;gap:5px;font-size:9px;color:rgba(159,225,203,.7)"><div style="width:8px;height:8px;border-radius:50%;background:#1D9E75;flex-shrink:0"></div>DVSA data (unlabelled)</div><div style="display:flex;align-items:center;gap:5px;font-size:9px;color:rgba(240,153,123,.8)"><div style="width:8px;height:8px;border-radius:50%;background:#D85A30;flex-shrink:0"></div>Domain rules</div><div style="display:flex;align-items:center;gap:5px;font-size:9px;color:rgba(133,183,235,.8)"><div style="width:8px;height:8px;border-radius:50%;background:#378ADD;flex-shrink:0"></div>Known fraud (enters at model stage only)</div><div style="display:flex;align-items:center;gap:5px;font-size:9px;color:rgba(175,169,236,.8)"><div style="width:8px;height:8px;border-radius:50%;background:#AFA9EC;flex-shrink:0"></div>Tester context features</div><div style="display:flex;align-items:center;gap:5px;font-size:9px;color:rgba(250,199,117,.8)"><div style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0"></div>Proposed additions</div></div>
+
+<div class="wrap">
+<!-- DATA MAP SVG -->
+<div style="opacity:0;animation:fI .6s ease .5s both;display:flex;justify-content:center">
+<svg width="100%" viewBox="0 0 900 320" style="max-height:310px">
+<defs>
+  <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round"/>
+  </marker>
+  <marker id="arr2b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#378ADD" stroke-width="1.5" stroke-linecap="round"/>
+  </marker>
+  <marker id="arr2c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="#D85A30" stroke-width="1.5" stroke-linecap="round"/>
+  </marker>
+</defs>
+
+<!-- SOURCE TABLES - TOP ROW -->
+<!-- MOT Tests -->
+<g style="animation:pI .4s ease .6s both;opacity:0">
+  <rect x="20" y="20" width="148" height="80" rx="8" fill="rgba(29,158,117,.1)" stroke="rgba(29,158,117,.35)" stroke-width=".8"/>
+  <text x="94" y="40" font-size="10" font-weight="600" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">MOT Tests</text>
+  <line x1="20" y1="48" x2="168" y2="48" stroke="rgba(29,158,117,.2)" stroke-width=".5"/>
+  <text x="30" y="62" font-size="8.5" fill="rgba(159,225,203,.65)" font-family="DM Sans,sans-serif">🔑 test_id (PK)</text>
+  <text x="30" y="74" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">tester_id · vehicle_id</text>
+  <text x="30" y="86" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">start_time · end_time</text>
+  <text x="30" y="98" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">result · odometer</text>
+</g>
+
+<!-- Vehicle -->
+<g style="animation:pI .4s ease .8s both;opacity:0">
+  <rect x="192" y="20" width="148" height="80" rx="8" fill="rgba(29,158,117,.1)" stroke="rgba(29,158,117,.35)" stroke-width=".8"/>
+  <text x="266" y="40" font-size="10" font-weight="600" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">Vehicle Data</text>
+  <line x1="192" y1="48" x2="340" y2="48" stroke="rgba(29,158,117,.2)" stroke-width=".5"/>
+  <text x="202" y="62" font-size="8.5" fill="rgba(159,225,203,.65)" font-family="DM Sans,sans-serif">🔑 vehicle_id (PK)</text>
+  <text x="202" y="74" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">make · model</text>
+  <text x="202" y="86" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">engine_size</text>
+  <text x="202" y="98" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">first_reg_date</text>
+</g>
+
+<!-- Tester -->
+<g style="animation:pI .4s ease 1s both;opacity:0">
+  <rect x="364" y="20" width="148" height="80" rx="8" fill="rgba(29,158,117,.1)" stroke="rgba(29,158,117,.35)" stroke-width=".8"/>
+  <text x="438" y="40" font-size="10" font-weight="600" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">Tester / Site</text>
+  <line x1="364" y1="48" x2="512" y2="48" stroke="rgba(29,158,117,.2)" stroke-width=".5"/>
+  <text x="374" y="62" font-size="8.5" fill="rgba(159,225,203,.65)" font-family="DM Sans,sans-serif">🔑 tester_id (PK)</text>
+  <text x="374" y="74" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">site_id · region</text>
+  <text x="374" y="86" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">garage_type</text>
+  <text x="374" y="98" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">auth_status · volume</text>
+</g>
+
+<!-- History -->
+<g style="animation:pI .4s ease 1.2s both;opacity:0">
+  <rect x="536" y="20" width="148" height="80" rx="8" fill="rgba(29,158,117,.1)" stroke="rgba(29,158,117,.35)" stroke-width=".8"/>
+  <text x="610" y="40" font-size="10" font-weight="600" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">Test History</text>
+  <line x1="536" y1="48" x2="684" y2="48" stroke="rgba(29,158,117,.2)" stroke-width=".5"/>
+  <text x="546" y="62" font-size="8.5" fill="rgba(159,225,203,.65)" font-family="DM Sans,sans-serif">🔑 vehicle_id (FK)</text>
+  <text x="546" y="74" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">prev_odometer</text>
+  <text x="546" y="86" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">defects · fails</text>
+  <text x="546" y="98" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">prev_pass_rate</text>
+</g>
+
+<!-- Domain Rules (position 5) -->
+<g style="animation:pI .4s ease 1.4s both;opacity:0">
+  <rect x="708" y="20" width="90" height="80" rx="8" fill="rgba(216,90,48,.1)" stroke="rgba(216,90,48,.35)" stroke-width=".8"/>
+  <text x="753" y="36" font-size="9" font-weight="600" fill="#F0997B" text-anchor="middle" font-family="DM Sans,sans-serif">Domain</text>
+  <text x="753" y="48" font-size="9" font-weight="600" fill="#F0997B" text-anchor="middle" font-family="DM Sans,sans-serif">Rules</text>
+  <line x1="708" y1="54" x2="798" y2="54" stroke="rgba(216,90,48,.2)" stroke-width=".5"/>
+  <text x="716" y="66" font-size="7.5" fill="rgba(240,153,123,.65)" font-family="DM Sans,sans-serif">&lt;20 min flag</text>
+  <text x="716" y="77" font-size="7.5" fill="rgba(240,153,123,.55)" font-family="DM Sans,sans-serif">&gt;98% pass</text>
+  <text x="716" y="88" font-size="7.5" fill="rgba(240,153,123,.55)" font-family="DM Sans,sans-serif">odo decrease</text>
+  <text x="716" y="99" font-size="7.5" fill="rgba(240,153,123,.55)" font-family="DM Sans,sans-serif">retest &lt;4hr</text>
+</g>
+
+<!-- separator before Known Fraud -->
+<line x1="806" y1="12" x2="806" y2="108" stroke="rgba(255,255,255,.1)" stroke-width="1" opacity="0" style="animation:fI .3s ease 1.55s both"/>
+
+<!-- Known Fraud — far right — does NOT feed into SQL -->
+<g style="animation:pI .4s ease 1.6s both;opacity:0">
+  <rect x="812" y="20" width="80" height="80" rx="8" fill="rgba(55,138,221,.08)" stroke="rgba(55,138,221,.28)" stroke-width=".8"/>
+  <text x="852" y="37" font-size="9" font-weight="600" fill="#85B7EB" text-anchor="middle" font-family="DM Sans,sans-serif">Known</text>
+  <text x="852" y="49" font-size="9" font-weight="600" fill="#85B7EB" text-anchor="middle" font-family="DM Sans,sans-serif">Fraud</text>
+  <line x1="812" y1="55" x2="892" y2="55" stroke="rgba(55,138,221,.15)" stroke-width=".5"/>
+  <text x="820" y="67" font-size="7.5" fill="rgba(133,183,235,.6)" font-family="DM Sans,sans-serif">fraud = 1</text>
+  <text x="820" y="78" font-size="7.5" fill="rgba(133,183,235,.5)" font-family="DM Sans,sans-serif">labelled set</text>
+  <text x="820" y="89" font-size="7.5" fill="rgba(133,183,235,.45)" font-family="DM Sans,sans-serif">used at</text>
+  <text x="820" y="100" font-size="7.5" fill="rgba(133,183,235,.45)" font-family="DM Sans,sans-serif">model stage</text>
+</g>
+
+<!-- ARROWS DOWN TO ENRICHED ROW -->
+<g style="animation:fI .4s ease 1.8s both;opacity:0">
+  <line x1="94" y1="100" x2="94" y2="138" stroke="#1D9E75" stroke-width="1" stroke-dasharray="3 2" style="animation:fD .8s linear infinite" marker-end="url(#arr2)"/>
+  <line x1="266" y1="100" x2="266" y2="138" stroke="#1D9E75" stroke-width="1" stroke-dasharray="3 2" style="animation:fD .8s linear infinite;animation-delay:.15s" marker-end="url(#arr2)"/>
+  <line x1="438" y1="100" x2="438" y2="138" stroke="#1D9E75" stroke-width="1" stroke-dasharray="3 2" style="animation:fD .8s linear infinite;animation-delay:.3s" marker-end="url(#arr2)"/>
+  <line x1="610" y1="100" x2="610" y2="138" stroke="#1D9E75" stroke-width="1" stroke-dasharray="3 2" style="animation:fD .8s linear infinite;animation-delay:.45s" marker-end="url(#arr2)"/>
+  <line x1="753" y1="100" x2="753" y2="138" stroke="#D85A30" stroke-width="1" stroke-dasharray="3 2" style="animation:fD .8s linear infinite;animation-delay:.6s" marker-end="url(#arr2c)"/>
+  <text x="450" y="130" font-size="8.5" fill="rgba(29,158,117,.55)" text-anchor="middle" font-family="DM Sans,sans-serif">SQL LEFT JOIN · Window functions for tester context</text>
+</g>
+
+<!-- ENRICHED ROW TABLE -->
+<g style="animation:fU .5s ease 2s both;opacity:0">
+  <rect x="20" y="148" width="860" height="100" rx="10" fill="rgba(29,158,117,.06)" stroke="rgba(29,158,117,.3)" stroke-width="1"/>
+  <text x="450" y="165" font-size="9.5" font-weight="600" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">Enriched test row — unit of analysis — one row per individual test</text>
+  <line x1="20" y1="172" x2="880" y2="172" stroke="rgba(29,158,117,.2)" stroke-width=".5"/>
+
+  <!-- COLUMN HEADERS -->
+  <text x="38" y="186" font-size="8" fill="rgba(159,225,203,.5)" font-family="DM Mono,monospace">test_id</text>
+  <text x="95" y="186" font-size="8" fill="rgba(159,225,203,.5)" font-family="DM Mono,monospace">duration</text>
+  <text x="160" y="186" font-size="8" fill="rgba(159,225,203,.5)" font-family="DM Mono,monospace">result</text>
+  <text x="210" y="186" font-size="8" fill="rgba(159,225,203,.5)" font-family="DM Mono,monospace">odometer</text>
+  <text x="275" y="186" font-size="8" fill="rgba(240,153,123,.6)" font-family="DM Mono,monospace">odo_missing</text>
+  <text x="355" y="186" font-size="8" fill="rgba(175,169,236,.6)" font-family="DM Mono,monospace">tester_pass_30d</text>
+  <text x="455" y="186" font-size="8" fill="rgba(175,169,236,.6)" font-family="DM Mono,monospace">peer_pass_rate</text>
+  <text x="548" y="186" font-size="8" fill="rgba(175,169,236,.6)" font-family="DM Mono,monospace">tester_avg_dur</text>
+  <text x="645" y="186" font-size="8" fill="rgba(240,153,123,.6)" font-family="DM Mono,monospace">rule_fired</text>
+  <text x="715" y="186" font-size="8" fill="rgba(133,183,235,.6)" font-family="DM Mono,monospace">fraud_label</text>
+  <text x="790" y="186" font-size="8" fill="rgba(250,199,117,.6)" font-family="DM Mono,monospace">[score]</text>
+  <line x1="20" y1="192" x2="880" y2="192" stroke="rgba(29,158,117,.15)" stroke-width=".5"/>
+
+  <!-- FLAGGED ROW -->
+  <rect x="22" y="194" width="856" height="22" rx="4" fill="rgba(226,75,74,.08)"/>
+  <text x="38" y="209" font-size="8.5" fill="#F09595" font-weight="500" font-family="DM Mono,monospace">T004</text>
+  <text x="95" y="209" font-size="8.5" fill="#F09595" font-weight="500" font-family="DM Mono,monospace">9 min ⚑</text>
+  <text x="160" y="209" font-size="8.5" fill="rgba(159,225,203,.7)" font-family="DM Mono,monospace">pass</text>
+  <text x="210" y="209" font-size="8.5" fill="rgba(159,225,203,.7)" font-family="DM Mono,monospace">33,000</text>
+  <text x="275" y="209" font-size="8.5" fill="#F09595" font-weight="500" font-family="DM Mono,monospace">0</text>
+  <text x="355" y="209" font-size="8.5" fill="#F09595" font-weight="500" font-family="DM Mono,monospace">97.8% ⚑</text>
+  <text x="455" y="209" font-size="8.5" fill="rgba(159,225,203,.7)" font-family="DM Mono,monospace">81.2%</text>
+  <text x="548" y="209" font-size="8.5" fill="#FAC775" font-weight="500" font-family="DM Mono,monospace">28 min ⚠</text>
+  <text x="645" y="209" font-size="8.5" fill="#F09595" font-weight="500" font-family="DM Mono,monospace">1 ⚑</text>
+  <text x="715" y="209" font-size="8.5" fill="rgba(133,183,235,.6)" font-family="DM Mono,monospace">—</text>
+  <text x="790" y="209" font-size="8.5" fill="rgba(250,199,117,.5)" font-family="DM Mono,monospace">pending</text>
+
+  <!-- CLEAN ROW -->
+  <text x="38" y="230" font-size="8.5" fill="rgba(159,225,203,.7)" font-family="DM Mono,monospace">T001</text>
+  <text x="95" y="230" font-size="8.5" fill="rgba(159,225,203,.7)" font-family="DM Mono,monospace">52 min</text>
+  <text x="160" y="230" font-size="8.5" fill="rgba(159,225,203,.7)" font-family="DM Mono,monospace">pass</text>
+  <text x="210" y="230" font-size="8.5" fill="rgba(159,225,203,.7)" font-family="DM Mono,monospace">68,000</text>
+  <text x="275" y="230" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Mono,monospace">0</text>
+  <text x="355" y="230" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Mono,monospace">81.4%</text>
+  <text x="455" y="230" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Mono,monospace">81.2%</text>
+  <text x="548" y="230" font-size="8.5" fill="rgba(159,225,203,.55)" font-family="DM Mono,monospace">49 min</text>
+  <text x="645" y="230" font-size="8.5" fill="rgba(29,158,117,.7)" font-family="DM Mono,monospace">0</text>
+  <text x="715" y="230" font-size="8.5" fill="rgba(133,183,235,.55)" font-family="DM Mono,monospace">—</text>
+  <text x="790" y="230" font-size="8.5" fill="rgba(250,199,117,.4)" font-family="DM Mono,monospace">pending</text>
+</g>
+
+<!-- bottom legend dots removed - legend at top -->
+<g style="animation:fI .4s ease 2.6s both;opacity:0">
+  <text x="450" y="272" font-size="8" fill="rgba(226,75,74,.6)" text-anchor="middle" font-family="DM Sans,sans-serif">⚑ = already suspicious before model runs</text>
+</g>
+
+<!-- PEER NOTE -->
+<text x="450" y="294" font-size="8" fill="rgba(159,225,203,.35)" text-anchor="middle" font-family="DM Sans,sans-serif">Peer group = same garage type + same region + similar volume band → SQL PARTITION BY garage_type, region, volume_band</text>
+</svg>
+</div>
+</div>
+</div>
+
+
+</body>
+</html>`,
+  `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DVSA Slide 3 — Isolation Forest</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g:#1D9E75;--gl:#9FE1CB;
+  --p:#7F77DD;--pl:#AFA9EC;
+  --r:#E24B4A;--rl:#F09595;
+  --a:#EF9F27;--al:#FAC775;
+  --b:#378ADD;--bl:#85B7EB;
+  --bg:#07101e;--br:rgba(255,255,255,.07);--br2:rgba(255,255,255,.13);
+  --t:rgba(255,255,255,.94);--t2:rgba(159,225,203,.72);--t3:rgba(159,225,203,.36);
+}
+html,body{width:100%;height:100vh;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t);display:flex;align-items:center;justify-content:center}
+.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(29,158,117,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(29,158,117,.05) 1px,transparent 1px);background-size:42px 42px;pointer-events:none}
+.slide{position:relative;z-index:1;width:100%;max-width:1060px;padding:16px 38px;display:flex;flex-direction:column;align-items:center}
+
+@keyframes fU{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fI{from{opacity:0}to{opacity:1}}
+@keyframes xW{from{width:0}to{width:160px}}
+@keyframes fR{0%{stroke-dashoffset:28}100%{stroke-dashoffset:0}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes barGrow{from{width:0}to{width:var(--w)}}
+
+.a1{animation:fU .5s ease .1s both}
+.a2{animation:fU .5s ease .25s both}
+.a4{animation:xW .7s ease .5s both;display:block}
+.a5{animation:fU .5s ease .7s both}
+.a6{animation:fU .5s ease .9s both}
+.a7{animation:fU .5s ease 1.1s both}
+.a8{animation:fU .5s ease 1.3s both}
+
+.stag{font-size:10px;letter-spacing:.18em;color:var(--g);text-transform:uppercase;margin-bottom:5px}
+.stit{font-size:20px;font-weight:600;color:#fff;text-align:center;line-height:1.25;margin-bottom:3px}
+.stit em{color:var(--g);font-style:normal}
+.dline{height:2px;background:var(--g);width:0;margin:0 auto 8px}
+
+/* 3-COL LAYOUT */
+.main{display:grid;grid-template-columns:185px 1fr 200px;gap:11px;width:100%;align-items:start}
+
+/* LEFT */
+.left{display:flex;flex-direction:column;gap:5px;padding-top:90px}
+.rej-lbl{font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(226,75,74,.45);margin-bottom:3px}
+.rej{background:rgba(226,75,74,.06);border:.5px solid rgba(226,75,74,.18);border-radius:7px;padding:6px 10px;position:relative}
+.rx{position:absolute;top:4px;right:7px;font-size:11px;color:rgba(226,75,74,.6);font-weight:600}
+.ra{font-size:10px;font-weight:600;color:var(--rl)}
+.rf{font-size:7.5px;color:rgba(240,153,123,.48);margin-bottom:3px;line-height:1.3}
+.rw-lbl{font-size:6.5px;color:rgba(226,75,74,.38);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1px}
+.rw{font-size:7.5px;color:rgba(159,225,203,.48);line-height:1.35}
+
+/* CENTRE */
+.ctr{display:flex;flex-direction:column;align-items:center;gap:5px}
+
+.tbl-wrap{width:100%;background:rgba(29,158,117,.05);border:.5px solid rgba(29,158,117,.22);border-radius:7px;overflow:hidden}
+.tbl-ttl{font-size:8px;color:var(--t3);padding:4px 8px;text-align:center;border-bottom:.5px solid rgba(29,158,117,.14)}
+.tbl{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace}
+.tbl th{font-size:6.5px;color:rgba(159,225,203,.42);padding:3px 4px;text-align:center;border-bottom:.5px solid rgba(29,158,117,.1);font-weight:400;white-space:nowrap}
+.tbl td{font-size:7px;padding:3px 4px;text-align:center;white-space:nowrap}
+.tr-f{background:rgba(226,75,74,.07)}
+.tr-f td{color:var(--rl)}
+.tr-f td.ok{color:rgba(159,225,203,.65)}
+.tr-f td.wa{color:var(--al)}
+.tr-c td{color:rgba(159,225,203,.58)}
+.th-p{color:rgba(175,169,236,.5)!important}
+.th-c{color:rgba(240,153,123,.5)!important}
+.th-b{color:rgba(133,183,235,.5)!important}
+.th-a{color:rgba(250,199,117,.5)!important}
+
+.arr-dn{display:flex;justify-content:center}
+
+.if-box{background:rgba(127,119,221,.08);border:.5px solid rgba(127,119,221,.28);border-radius:7px;padding:6px 12px;text-align:center;width:100%}
+.if-nm{font-size:12px;font-weight:600;color:var(--pl)}
+.if-ds{font-size:7.5px;color:rgba(175,169,236,.52);margin-top:1px}
+
+.clust{width:100%}
+
+/* SPLIT ARROWS TO BANDS */
+.band-row{display:flex;gap:5px;width:100%}
+.band{flex:1;border-radius:7px;padding:5px 7px}
+.bh{background:rgba(226,75,74,.1);border:.5px solid rgba(226,75,74,.3)}
+.bm{background:rgba(239,159,39,.08);border:.5px solid rgba(239,159,39,.25)}
+.bl{background:rgba(29,158,117,.08);border:.5px solid rgba(29,158,117,.25)}
+.b-sc{font-size:12px;font-weight:700;display:block;margin-bottom:1px}
+.b-lb{font-size:8px;font-weight:600;display:block;margin-bottom:2px}
+.b-ds{font-size:7px;line-height:1.4}
+.bh .b-sc,.bh .b-lb{color:var(--rl)}.bh .b-ds{color:rgba(240,153,123,.65)}
+.bm .b-sc,.bm .b-lb{color:var(--al)}.bm .b-ds{color:rgba(250,199,117,.65)}
+.bl .b-sc,.bl .b-lb{color:var(--gl)}.bl .b-ds{color:rgba(159,225,203,.65)}
+
+/* RIGHT */
+.right{display:flex;flex-direction:column;gap:6px;padding-top:90px}
+
+.fraud-box{background:rgba(55,138,221,.08);border:1px solid rgba(55,138,221,.3);border-radius:8px;padding:8px 10px}
+.fb-t{font-size:9px;font-weight:600;color:var(--bl);margin-bottom:4px}
+.fb-i{font-size:7.5px;color:rgba(133,183,235,.68);padding:2px 0;border-top:.5px solid rgba(55,138,221,.14);line-height:1.4}
+.fb-i:first-of-type{border-top:none}
+
+.why-box{background:rgba(127,119,221,.06);border:.5px solid rgba(127,119,221,.22);border-radius:8px;padding:8px 10px}
+.why-t{font-size:9.5px;font-weight:600;color:var(--pl);margin-bottom:4px}
+.why-i{font-size:7.5px;color:var(--t2);padding:2px 0;border-top:.5px solid var(--br);line-height:1.4}
+.why-i:first-of-type{border-top:none}
+.contam-line{background:rgba(127,119,221,.1);border:.5px solid rgba(127,119,221,.25);border-radius:5px;padding:4px 7px;margin-top:5px;display:flex;align-items:flex-start;gap:5px}
+.contam-arrow{color:var(--pl);font-size:11px;flex-shrink:0;margin-top:1px}
+.contam-text{font-size:7.5px;color:rgba(175,169,236,.7);line-height:1.4}
+
+/* VALIDATION BOTTOM */
+.val-wrap{width:100%;background:rgba(29,158,117,.05);border:.5px solid rgba(29,158,117,.2);border-radius:8px;padding:8px 12px;margin-top:6px;display:grid;grid-template-columns:1fr 220px;gap:12px}
+.val-t{font-size:9.5px;font-weight:600;color:var(--gl);margin-bottom:6px}
+.pb-row{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.pb-lbl{font-size:7.5px;min-width:110px;flex-shrink:0}
+.pb-wrap{flex:1;background:var(--br);border-radius:99px;height:5px;overflow:hidden}
+.pb-fill{height:100%;border-radius:99px;animation:barGrow 1s ease 2s both}
+.pb-val{font-size:7.5px;font-weight:600;min-width:26px}
+.val-note{font-size:8px;color:var(--gl);margin-top:4px;font-weight:500}
+.val-checks{display:flex;flex-direction:column;gap:4px;justify-content:center}
+.vc{display:flex;gap:6px;align-items:flex-start;font-size:7.5px;color:var(--t2);line-height:1.45}
+.vc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:3px}
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="slide">
+
+<div class="stag a1">Slide 3 of 5 — Fraud Detection Models · Layer 1</div>
+<h2 class="stit a2"><em>Isolation Forest</em> — unsupervised anomaly detection</h2>
+<div class="dline a4"></div>
+
+<div class="main a5">
+
+<!-- LEFT: REJECTED — starts at same height as IF box -->
+<div class="left">
+  <div class="rej-lbl">Alternatives evaluated ✕</div>
+  <div class="rej"><div class="rx">✕</div><div class="ra">LOF</div><div class="rf">Local Outlier Factor</div><div class="rw-lbl">why rejected</div><div class="rw">Pairwise distances — too slow for millions of tests.</div></div>
+  <div class="rej"><div class="rx">✕</div><div class="ra">One-Class SVM</div><div class="rf">Support Vector Machine</div><div class="rw-lbl">why rejected</div><div class="rw">Requires kernel tuning. Degrades with many features.</div></div>
+  <div class="rej"><div class="rx">✕</div><div class="ra">Fast MCD</div><div class="rf">Min. Covariance Determinant</div><div class="rw-lbl">why rejected</div><div class="rw">Assumes elliptical distribution. Fraud is not elliptical.</div></div>
+  <div class="rej"><div class="rx">✕</div><div class="ra">PCA + inverse</div><div class="rf">Principal Component Analysis</div><div class="rw-lbl">why rejected</div><div class="rw">Linear only. Non-linear fraud patterns missed.</div></div>
+</div>
+
+<!-- CENTRE -->
+<div class="ctr">
+
+  <!-- TABLE -->
+  <div class="tbl-wrap">
+    <div class="tbl-ttl">Enriched test rows entering the model</div>
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>test_id</th><th>duration</th><th>result</th><th>odometer</th>
+          <th class="th-c">odo_missing</th><th class="th-p">pass_rate_30d</th>
+          <th class="th-p">peer_rate</th><th class="th-p">avg_dur_30d</th>
+          <th class="th-c">rule_fired</th><th class="th-b">fraud_label</th>
+          <th class="th-a">risk_score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="tr-f">
+          <td>T004</td><td>9 min ⚑</td><td class="ok">pass</td><td class="ok">33,000</td>
+          <td>0</td><td>97.8% ⚑</td><td class="ok">81.2%</td><td class="wa">28 min ⚠</td>
+          <td>1 ⚑</td><td class="ok">—</td><td class="wa">pending →</td>
+        </tr>
+        <tr class="tr-c">
+          <td>T001</td><td>52 min</td><td>pass</td><td>68,000</td>
+          <td>0</td><td>81.4%</td><td>81.2%</td><td>49 min</td>
+          <td>0</td><td>—</td><td style="color:rgba(250,199,117,.35)">pending →</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ARROW DOWN -->
+  <div class="arr-dn">
+    <svg width="40" height="16" viewBox="0 0 40 16"><line x1="20" y1="0" x2="20" y2="10" stroke="#7F77DD" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite"/><path d="M15 7L20 14L25 7" fill="none" stroke="#7F77DD" stroke-width="1.2" stroke-linecap="round"/></svg>
+  </div>
+
+  <!-- IF BOX -->
+  <div class="if-box">
+    <div class="if-nm">Isolation Forest</div>
+    <div class="if-ds">Reads each row · builds random trees · measures splits to isolate · outputs anomaly score per test</div>
+  </div>
+
+  <!-- CLUSTER -->
+  <div class="clust">
+    <svg width="100%" viewBox="0 0 360 138" style="max-height:130px">
+      <ellipse cx="148" cy="72" rx="80" ry="56" fill="rgba(29,158,117,.06)" stroke="rgba(29,158,117,.16)" stroke-width="1" stroke-dasharray="5 3"/>
+      <text x="148" y="134" font-size="7.5" fill="rgba(29,158,117,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">normal — 8+ splits needed</text>
+      <circle cx="130" cy="62" r="3.5" fill="rgba(29,158,117,.7)"/>
+      <circle cx="148" cy="54" r="3.5" fill="rgba(29,158,117,.65)"/>
+      <circle cx="162" cy="67" r="3.5" fill="rgba(29,158,117,.7)"/>
+      <circle cx="138" cy="80" r="3.5" fill="rgba(29,158,117,.65)"/>
+      <circle cx="158" cy="86" r="3.5" fill="rgba(29,158,117,.7)"/>
+      <circle cx="170" cy="74" r="3" fill="rgba(29,158,117,.6)"/>
+      <circle cx="125" cy="87" r="3" fill="rgba(29,158,117,.6)"/>
+      <circle cx="145" cy="97" r="3" fill="rgba(29,158,117,.55)"/>
+      <circle cx="168" cy="92" r="3" fill="rgba(29,158,117,.55)"/>
+      <circle cx="136" cy="50" r="3" fill="rgba(29,158,117,.6)"/>
+      <circle cx="172" cy="58" r="3" fill="rgba(29,158,117,.6)"/>
+      <circle cx="120" cy="70" r="3" fill="rgba(29,158,117,.55)"/>
+      <g opacity=".13">
+        <line x1="70" y1="42" x2="228" y2="42" stroke="#1D9E75" stroke-width=".6" stroke-dasharray="2 2"/>
+        <line x1="70" y1="62" x2="228" y2="62" stroke="#1D9E75" stroke-width=".6" stroke-dasharray="2 2"/>
+        <line x1="70" y1="82" x2="228" y2="82" stroke="#1D9E75" stroke-width=".6" stroke-dasharray="2 2"/>
+        <line x1="110" y1="22" x2="110" y2="118" stroke="#1D9E75" stroke-width=".6" stroke-dasharray="2 2"/>
+        <line x1="150" y1="22" x2="150" y2="118" stroke="#1D9E75" stroke-width=".6" stroke-dasharray="2 2"/>
+        <line x1="190" y1="22" x2="190" y2="118" stroke="#1D9E75" stroke-width=".6" stroke-dasharray="2 2"/>
+      </g>
+      <!-- anomalous -->
+      <circle cx="300" cy="26" r="6" fill="rgba(226,75,74,.85)" style="animation:blink 1.8s ease infinite"/>
+      <text x="310" y="22" font-size="7" fill="rgba(226,75,74,.75)" font-family="DM Sans,sans-serif">T004 · 9min</text>
+      <circle cx="292" cy="64" r="5" fill="rgba(226,75,74,.75)" style="animation:blink 2.1s ease infinite;animation-delay:.4s"/>
+      <text x="301" y="67" font-size="7" fill="rgba(226,75,74,.62)" font-family="DM Sans,sans-serif">T007 · 7min</text>
+      <circle cx="278" cy="104" r="4.5" fill="rgba(239,159,39,.8)" style="animation:blink 2.4s ease infinite;animation-delay:.8s"/>
+      <text x="287" y="107" font-size="7" fill="rgba(250,199,117,.6)" font-family="DM Sans,sans-serif">T031 · odo?</text>
+      <!-- isolation splits T004 -->
+      <line x1="252" y1="4" x2="252" y2="124" stroke="rgba(226,75,74,.2)" stroke-width=".8" stroke-dasharray="4 3"/>
+      <line x1="252" y1="44" x2="360" y2="44" stroke="rgba(226,75,74,.2)" stroke-width=".8" stroke-dasharray="4 3"/>
+      <text x="254" y="14" font-size="6.5" fill="rgba(226,75,74,.42)" font-family="DM Sans,sans-serif">split 1</text>
+      <text x="254" y="54" font-size="6.5" fill="rgba(226,75,74,.42)" font-family="DM Sans,sans-serif">split 2 → isolated</text>
+      <rect x="2" y="2" width="60" height="15" rx="3" fill="rgba(226,75,74,.1)" stroke="rgba(226,75,74,.2)" stroke-width=".5"/>
+      <text x="5" y="9" font-size="6.5" fill="rgba(226,75,74,.7)" font-family="DM Sans,sans-serif">0.91 → HIGH risk</text>
+      <text x="5" y="15" font-size="6" fill="rgba(159,225,203,.28)" font-family="DM Sans,sans-serif">2 splits = anomalous</text>
+      <rect x="2" y="116" width="60" height="15" rx="3" fill="rgba(29,158,117,.08)" stroke="rgba(29,158,117,.18)" stroke-width=".5"/>
+      <text x="5" y="123" font-size="6.5" fill="rgba(29,158,117,.7)" font-family="DM Sans,sans-serif">0.08 → LOW risk</text>
+      <text x="5" y="129" font-size="6" fill="rgba(159,225,203,.28)" font-family="DM Sans,sans-serif">8+ splits = normal</text>
+    </svg>
+  </div>
+
+  <!-- SPLIT ARROWS TO BANDS -->
+  <svg width="100%" height="28" viewBox="0 0 360 28">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#E24B4A" stroke-width="1.5" stroke-linecap="round"/></marker>
+      <marker id="aa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-linecap="round"/></marker>
+      <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round"/></marker>
+    </defs>
+    <line x1="180" y1="0" x2="180" y2="10" stroke="rgba(175,169,236,.45)" stroke-width="1.2"/>
+    <line x1="55" y1="10" x2="305" y2="10" stroke="rgba(175,169,236,.25)" stroke-width="1"/>
+    <line x1="55" y1="10" x2="55" y2="24" stroke="#E24B4A" stroke-width="1.2" marker-end="url(#ar)"/>
+    <line x1="180" y1="10" x2="180" y2="24" stroke="#EF9F27" stroke-width="1.2" marker-end="url(#aa)"/>
+    <line x1="305" y1="10" x2="305" y2="24" stroke="#1D9E75" stroke-width="1.2" marker-end="url(#ag)"/>
+    <text x="180" y="8" font-size="7" fill="rgba(175,169,236,.42)" text-anchor="middle" font-family="DM Sans,sans-serif">anomaly score output</text>
+  </svg>
+
+  <!-- BANDS -->
+  <div class="band-row">
+    <div class="band bh">
+      <span class="b-sc">≥ 0.70</span>
+      <span class="b-lb">HIGH risk</span>
+      <span class="b-ds">Sent to enforcement immediately. 8 in 10 flagged cases expected to be confirmed fraud.</span>
+    </div>
+    <div class="band bm">
+      <span class="b-sc">0.40–0.69</span>
+      <span class="b-lb">MEDIUM risk</span>
+      <span class="b-ds">Scheduled investigation. May be new fraud type not yet in the labelled set.</span>
+    </div>
+    <div class="band bl">
+      <span class="b-sc">< 0.40</span>
+      <span class="b-lb">LOW risk</span>
+      <span class="b-ds">Not sent to enforcement. Looks like thousands of legitimate tests. Rescored monthly.</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- RIGHT: starts at same level as IF box -->
+<div class="right a7">
+
+  <div class="fraud-box">
+    <div class="fb-t">Known fraud set</div>
+    <div class="fb-i">Does NOT train Isolation Forest</div>
+    <div class="fb-i">Used in Validation 1 only</div>
+    <div class="fb-i" style="color:rgba(133,183,235,.42)">→ Trains XGBoost · slide 4</div>
+  </div>
+
+  <div class="why-box">
+    <div class="why-t">Why Isolation Forest ✓</div>
+    <div class="why-i">Scales linearly — millions of tests</div>
+    <div class="why-i">No distributional assumption</div>
+    <div class="why-i">No labels needed to run</div>
+    <div class="why-i">Continuous score — ranks, not just flags</div>
+    <div class="why-i">Interpretable to enforcement officers</div>
+    <div class="contam-line">
+      <span class="contam-arrow">→</span>
+      <span class="contam-text"><strong style="color:var(--pl)">Contamination fed in: 1–5%</strong> — tells the model what proportion of data to treat as anomalous. Based on DVSA published enforcement data. Not the same as the output score threshold.</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- VALIDATION BOTTOM -->
+<div style="width:100%;margin-top:5px" class="a8">
+  <div class="val-wrap">
+    <div>
+      <div class="val-t">Validation 1 — consistency check before deployment</div>
+      <div class="pb-row">
+        <div class="pb-lbl" style="color:var(--t3)">Baseline — random enforcement</div>
+        <div class="pb-wrap"><div class="pb-fill" style="--w:2%;background:rgba(255,255,255,.15)"></div></div>
+        <div class="pb-val" style="color:var(--t3)">1–2%</div>
+      </div>
+      <div class="pb-row">
+        <div class="pb-lbl" style="color:rgba(216,90,48,.8)">+ Domain rules only</div>
+        <div class="pb-wrap"><div class="pb-fill" style="--w:25%;background:#D85A30"></div></div>
+        <div class="pb-val" style="color:rgba(216,90,48,.8)">~25%</div>
+      </div>
+      <div class="pb-row">
+        <div class="pb-lbl" style="color:var(--pl)">+ Isolation Forest</div>
+        <div class="pb-wrap"><div class="pb-fill" style="--w:70%;background:#7F77DD"></div></div>
+        <div class="pb-val" style="color:var(--pl)">~70%</div>
+      </div>
+      <div style="font-size:7.5px;color:var(--t3);margin-top:3px;font-style:italic">+ XGBoost ensemble adds further — slide 4</div>
+    </div>
+    <div class="val-checks">
+      <div style="font-size:8px;font-weight:600;color:var(--gl);margin-bottom:4px">Three checks the model must pass:</div>
+      <div class="vc"><div class="vc-dot" style="background:#D85A30"></div>Tests where domain rule fired (rule_fired=1) must score MEDIUM or HIGH. If scoring LOW — features need fixing.</div>
+      <div class="vc"><div class="vc-dot" style="background:#EF9F27"></div>Tests with odometer missing + other suspicious features must score elevated. Missingness is a signal — model must recognise it.</div>
+      <div class="vc"><div class="vc-dot" style="background:#378ADD"></div>Confirmed fraud cases from labelled set must appear in top scores. If not — model is not detecting what we already know is fraud.</div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
+`,
+  `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DVSA Slide 4 — XGBoost</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g:#1D9E75;--gl:#9FE1CB;
+  --p:#7F77DD;--pl:#AFA9EC;
+  --xg:#534AB7;--xgl:#C4C0F5;
+  --r:#E24B4A;--rl:#F09595;
+  --a:#EF9F27;--al:#FAC775;
+  --b:#378ADD;--bl:#85B7EB;
+  --c:#D85A30;--cl:#F0997B;
+  --bg:#07101e;--br:rgba(255,255,255,.07);
+  --t:rgba(255,255,255,.94);--t2:rgba(159,225,203,.72);--t3:rgba(159,225,203,.36);
+}
+html,body{width:100%;height:100vh;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t);display:flex;align-items:center;justify-content:center}
+.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(83,74,183,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(83,74,183,.04) 1px,transparent 1px);background-size:42px 42px;pointer-events:none}
+.slide{position:relative;z-index:1;width:100%;max-width:1060px;padding:16px 38px;display:flex;flex-direction:column;align-items:center}
+
+@keyframes fU{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fI{from{opacity:0}to{opacity:1}}
+@keyframes xW{from{width:0}to{width:160px}}
+@keyframes fR{0%{stroke-dashoffset:28}100%{stroke-dashoffset:0}}
+@keyframes barGrow{from{width:0}to{width:var(--w)}}
+@keyframes errShrink{from{width:var(--w0)}to{width:var(--w)}}
+
+.a1{animation:fU .5s ease .1s both}
+.a2{animation:fU .5s ease .25s both}
+.a4{animation:xW .7s ease .5s both;display:block}
+.a5{animation:fU .5s ease .7s both}
+.a6{animation:fU .5s ease .9s both}
+.a7{animation:fU .5s ease 1.1s both}
+.a8{animation:fU .5s ease 1.3s both}
+.a9{animation:fU .5s ease 1.5s both}
+
+.stag{font-size:10px;letter-spacing:.18em;color:var(--xg);text-transform:uppercase;margin-bottom:5px}
+.stit{font-size:20px;font-weight:600;color:#fff;text-align:center;line-height:1.25;margin-bottom:3px}
+.stit em{color:var(--xgl);font-style:normal}
+.dline{height:2px;background:var(--xg);width:0;margin:0 auto 8px}
+
+/* 3-COL LAYOUT */
+.main{display:grid;grid-template-columns:175px 1fr 185px;gap:11px;width:100%;align-items:start}
+
+/* LEFT: NOT LIGHTGBM */
+.left{padding-top:140px}
+.nl-lbl{font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(226,75,74,.45);margin-bottom:4px}
+.rej{background:rgba(226,75,74,.06);border:.5px solid rgba(226,75,74,.18);border-radius:7px;padding:6px 10px;position:relative;margin-bottom:5px}
+.rej:last-child{margin-bottom:0}
+.rx{position:absolute;top:4px;right:7px;font-size:11px;color:rgba(226,75,74,.6);font-weight:600}
+.ra{font-size:10px;font-weight:600;color:var(--rl)}
+.rf{font-size:7.5px;color:rgba(240,153,123,.48);margin-bottom:3px;line-height:1.3}
+.rw-lbl{font-size:6.5px;color:rgba(226,75,74,.38);text-transform:uppercase;letter-spacing:.08em;margin-bottom:1px}
+.rw{font-size:7.5px;color:rgba(159,225,203,.48);line-height:1.35}
+
+/* CENTRE */
+.ctr{display:flex;flex-direction:column;align-items:center;gap:5px}
+
+/* TWO INPUT BOXES */
+.inputs{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}
+.inp{border-radius:7px;padding:7px 10px}
+.inp-if{background:rgba(127,119,221,.08);border:.5px solid rgba(127,119,221,.25)}
+.inp-fr{background:rgba(55,138,221,.08);border:.5px solid rgba(55,138,221,.25)}
+.inp-t{font-size:9px;font-weight:600;margin-bottom:3px}
+.inp-it{color:var(--pl)}.inp-fr-t{color:var(--bl)}
+.inp-body{font-size:7.5px;line-height:1.4}
+.if-chips{display:flex;gap:3px;flex-wrap:wrap;margin-top:3px}
+.chip{font-size:7.5px;font-weight:600;padding:1px 6px;border-radius:99px}
+.chip-h{background:rgba(226,75,74,.15);color:var(--rl)}
+.chip-m{background:rgba(239,159,39,.12);color:var(--al)}
+.chip-l{background:rgba(29,158,117,.1);color:var(--gl)}
+
+/* ARROW DOWN */
+.arr-dn{display:flex;justify-content:center}
+
+/* XGBOOST VISUAL */
+.xg-wrap{width:100%;background:rgba(83,74,183,.07);border:.5px solid rgba(83,74,183,.35);border-radius:9px;padding:8px 10px}
+.xg-header{text-align:center;margin-bottom:6px}
+.xg-name{font-size:13px;font-weight:600;color:var(--xgl)}
+.xg-desc{font-size:7.5px;color:rgba(196,192,245,.5);margin-top:1px}
+
+/* BOOSTING VISUAL */
+.boost-vis{width:100%;padding:4px 0}
+.boost-row{display:flex;align-items:center;gap:4px;margin-bottom:5px}
+.boost-row:last-child{margin-bottom:0}
+.tree-num{font-size:7.5px;color:rgba(196,192,245,.45);min-width:38px;flex-shrink:0;font-family:'DM Mono',monospace}
+.tree-bar-wrap{flex:1;background:rgba(83,74,183,.12);border-radius:99px;height:7px;overflow:hidden;position:relative}
+.tree-bar{height:100%;border-radius:99px;transition:width 1s ease}
+.tree-bar-correct{position:absolute;top:0;right:0;height:100%;background:rgba(29,158,117,.5);border-radius:99px}
+.tree-label{font-size:7.5px;min-width:70px;text-align:right;flex-shrink:0}
+.boost-legend{display:flex;gap:10px;margin-top:5px;justify-content:center}
+.bl-item{display:flex;align-items:center;gap:4px;font-size:7px;color:var(--t3)}
+.bl-dot{width:8px;height:6px;border-radius:2px;flex-shrink:0}
+
+/* OUTPUT TABLE */
+.tbl-wrap{width:100%;background:rgba(83,74,183,.05);border:.5px solid rgba(83,74,183,.2);border-radius:7px;overflow:hidden}
+.tbl-ttl{font-size:8px;color:rgba(196,192,245,.4);padding:3px 8px;text-align:center;border-bottom:.5px solid rgba(83,74,183,.12)}
+.tbl{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace}
+.tbl th{font-size:6.5px;color:rgba(196,192,245,.38);padding:3px 4px;text-align:center;border-bottom:.5px solid rgba(83,74,183,.1);font-weight:400;white-space:nowrap}
+.tbl td{font-size:7px;padding:3px 4px;text-align:center;white-space:nowrap}
+.tr-h td{color:var(--rl)}
+.tr-h td.ok{color:rgba(159,225,203,.6)}
+.tr-n td{color:rgba(159,225,203,.5)}
+
+/* COMPOSITE */
+.comp{width:100%;background:rgba(239,159,39,.05);border:.5px solid rgba(239,159,39,.22);border-radius:8px;padding:7px 10px}
+.comp-t{font-size:9.5px;font-weight:600;color:var(--al);margin-bottom:5px;text-align:center}
+.comp-formula{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--t2);line-height:1.8;margin-bottom:6px;background:rgba(255,255,255,.03);border-radius:5px;padding:5px 8px}
+.comp-bars{margin-bottom:6px}
+.cb-row{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.cb-lbl{font-size:7.5px;min-width:130px;flex-shrink:0}
+.cb-wrap{flex:1;background:var(--br);border-radius:99px;height:5px;overflow:hidden}
+.cb-fill{height:100%;border-radius:99px;animation:barGrow 1s ease 1.6s both}
+.cb-val{font-size:8px;font-weight:600;min-width:28px}
+.comp-result{display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(239,159,39,.08);border:.5px solid rgba(239,159,39,.25);border-radius:6px;padding:5px 10px}
+.cr-math{font-family:'DM Mono',monospace;font-size:8px;color:var(--t2)}
+.cr-eq{font-size:12px;color:rgba(239,159,39,.4)}
+.cr-score{font-size:20px;font-weight:700;color:var(--al)}
+.cr-band{font-size:9px;font-weight:600;color:var(--rl);background:rgba(226,75,74,.12);border:.5px solid rgba(226,75,74,.3);border-radius:99px;padding:2px 8px}
+
+/* ENFORCEMENT */
+.enf{width:100%;background:rgba(55,138,221,.05);border:.5px solid rgba(55,138,221,.18);border-radius:7px;padding:7px 10px}
+.enf-t{font-size:9px;font-weight:600;color:var(--bl);margin-bottom:4px}
+.rank-item{display:flex;gap:7px;align-items:flex-start;padding:3px 0;border-top:.5px solid rgba(55,138,221,.1)}
+.rank-item:first-of-type{border-top:none}
+.rb{font-size:8.5px;font-weight:600;padding:1px 7px;border-radius:99px;flex-shrink:0;white-space:nowrap}
+.rb-h{background:rgba(226,75,74,.14);color:var(--rl)}
+.rb-m{background:rgba(239,159,39,.1);color:var(--al)}
+.rt{font-size:7.5px;color:var(--t2);line-height:1.4}
+
+/* RIGHT */
+.right-col{display:flex;flex-direction:column;gap:6px;padding-top:140px}
+.why-xg{background:rgba(83,74,183,.07);border:.5px solid rgba(83,74,183,.25);border-radius:8px;padding:8px 10px}
+.wx-t{font-size:9.5px;font-weight:600;color:var(--xgl);margin-bottom:4px}
+.wx-i{font-size:7.5px;color:var(--t2);padding:2px 0;border-top:.5px solid var(--br);line-height:1.4}
+.wx-i:first-of-type{border-top:none}
+.anon{background:rgba(29,158,117,.05);border:.5px solid rgba(29,158,117,.18);border-radius:8px;padding:8px 10px;margin-top:2px}
+.an-t{font-size:9px;font-weight:600;color:var(--gl);margin-bottom:4px}
+.an-i{font-size:7.5px;color:var(--t2);padding:2px 0;border-top:.5px solid var(--br);line-height:1.4}
+.an-i:first-of-type{border-top:none}
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="slide">
+
+<div class="stag a1">Slide 4 of 5 — Fraud Detection Models · Layer 2</div>
+<h2 class="stit a2"><em>XGBoost Standard</em> — supervised layer + composite risk score</h2>
+<div class="dline a4"></div>
+
+<div class="main">
+
+<!-- LEFT: NOT LIGHTGBM -->
+<div class="left a5">
+  <div class="nl-lbl">Alternative rejected ✕</div>
+  <div class="rej">
+    <div class="rx">✕</div>
+    <div class="ra">LightGBM</div>
+    <div class="rf">Light Gradient Boosting Machine</div>
+    <div class="rw-lbl">why rejected</div>
+    <div class="rw">Faster on very large datasets with 100+ features. Our feature set is ~15–20 — speed gain negligible.</div>
+  </div>
+  <div class="rej">
+    <div class="rx">✕</div>
+    <div class="ra">Neural Network</div>
+    <div class="rf">Deep Learning Classifier</div>
+    <div class="rw-lbl">why rejected</div>
+    <div class="rw">Black box — cannot explain to enforcement or courts why a specific test was flagged.</div>
+  </div>
+  <div class="rej">
+    <div class="rx">✕</div>
+    <div class="ra">Logistic Regression</div>
+    <div class="rf">Linear Classifier</div>
+    <div class="rw-lbl">why rejected</div>
+    <div class="rw">Linear only. Misses non-linear combinations of features that characterise fraud.</div>
+  </div>
+</div>
+
+<!-- CENTRE -->
+<div class="ctr">
+
+  <!-- TWO INPUT BOXES -->
+  <div class="inputs a5">
+    <div class="inp inp-if">
+      <div class="inp-t inp-it">← Isolation Forest output</div>
+      <div class="inp-body" style="color:rgba(175,169,236,.65)">Anomaly scores per test · flagged test IDs</div>
+      <div class="if-chips">
+        <span class="chip chip-h">T004 · 0.94</span>
+        <span class="chip chip-m">T031 · 0.54</span>
+        <span class="chip chip-l">T001 · 0.08</span>
+      </div>
+    </div>
+    <div class="inp inp-fr">
+      <div class="inp-t" style="color:var(--bl)">Known fraud set</div>
+      <div class="inp-body" style="color:rgba(133,183,235,.65)">Confirmed cases · fraud=1<br>Training labels for XGBoost</div>
+      <div style="margin-top:3px;font-size:7px;color:rgba(133,183,235,.4)">grows via feedback loop</div>
+    </div>
+  </div>
+
+  <!-- ARROWS DOWN -->
+  <div class="arr-dn" style="opacity:0;animation:fI .3s ease .95s both">
+    <svg width="200" height="18" viewBox="0 0 200 18">
+      <defs>
+        <marker id="ap" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#7F77DD" stroke-width="1.5" stroke-linecap="round"/></marker>
+        <marker id="ab2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#378ADD" stroke-width="1.5" stroke-linecap="round"/></marker>
+      </defs>
+      <line x1="60" y1="2" x2="60" y2="14" stroke="#7F77DD" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite" marker-end="url(#ap)"/>
+      <line x1="140" y1="2" x2="140" y2="14" stroke="#378ADD" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite;animation-delay:.2s" marker-end="url(#ab2)"/>
+    </svg>
+  </div>
+
+  <!-- XGBOOST VISUAL -->
+  <div class="xg-wrap a6">
+    <div class="xg-header">
+      <div class="xg-name">XGBoost Standard</div>
+      <div class="xg-desc">Sequential trees · each corrects errors of previous · learns what confirmed fraud looks like</div>
+    </div>
+    <div style="opacity:0;animation:fU .4s ease 1.1s both">
+      <div style="font-size:7.5px;color:rgba(196,192,245,.5);text-align:center;margin-bottom:5px">Example — Tree 1 asks combination questions to score T004</div>
+      <svg width="100%" viewBox="0 0 380 148" style="max-height:145px">
+        <!-- ROOT -->
+        <rect x="110" y="4" width="160" height="22" rx="5" fill="rgba(83,74,183,.2)" stroke="rgba(83,74,183,.45)" stroke-width=".8"/>
+        <text x="190" y="19" font-size="8" fill="#C4C0F5" text-anchor="middle" font-family="DM Sans,sans-serif">duration &lt; 20 minutes?</text>
+        <!-- YES branch left -->
+        <line x1="145" y1="26" x2="80" y2="46" stroke="rgba(29,158,117,.5)" stroke-width=".8"/>
+        <text x="98" y="40" font-size="7" fill="rgba(29,158,117,.7)" font-family="DM Sans,sans-serif">YES</text>
+        <!-- NO branch right -->
+        <line x1="235" y1="26" x2="300" y2="46" stroke="rgba(226,75,74,.4)" stroke-width=".8"/>
+        <text x="268" y="40" font-size="7" fill="rgba(226,75,74,.6)" font-family="DM Sans,sans-serif">NO</text>
+        <!-- YES LEFT NODE -->
+        <rect x="20" y="46" width="120" height="22" rx="5" fill="rgba(83,74,183,.18)" stroke="rgba(83,74,183,.38)" stroke-width=".8"/>
+        <text x="80" y="61" font-size="7.5" fill="#C4C0F5" text-anchor="middle" font-family="DM Sans,sans-serif">rule_fired = 1?</text>
+        <!-- YES-YES -->
+        <line x1="50" y1="68" x2="30" y2="86" stroke="rgba(29,158,117,.5)" stroke-width=".8"/>
+        <text x="28" y="80" font-size="6.5" fill="rgba(29,158,117,.65)" font-family="DM Sans,sans-serif">YES</text>
+        <!-- YES-NO -->
+        <line x1="110" y1="68" x2="130" y2="86" stroke="rgba(226,75,74,.4)" stroke-width=".8"/>
+        <text x="115" y="80" font-size="6.5" fill="rgba(226,75,74,.55)" font-family="DM Sans,sans-serif">NO</text>
+        <!-- T004 RESULT -->
+        <rect x="4" y="86" width="66" height="26" rx="5" fill="rgba(226,75,74,.18)" stroke="rgba(226,75,74,.5)" stroke-width="1"/>
+        <text x="37" y="98" font-size="7.5" font-weight="600" fill="#F09595" text-anchor="middle" font-family="DM Sans,sans-serif">prob = 0.85</text>
+        <text x="37" y="108" font-size="7" fill="rgba(240,153,123,.7)" text-anchor="middle" font-family="DM Sans,sans-serif">← T004 here</text>
+        <!-- pass rate node -->
+        <rect x="96" y="86" width="110" height="22" rx="5" fill="rgba(83,74,183,.15)" stroke="rgba(83,74,183,.3)" stroke-width=".8"/>
+        <text x="151" y="101" font-size="7.5" fill="#C4C0F5" text-anchor="middle" font-family="DM Sans,sans-serif">pass_rate &gt; 95%?</text>
+        <line x1="120" y1="108" x2="110" y2="124" stroke="rgba(29,158,117,.4)" stroke-width=".8"/>
+        <rect x="80" y="124" width="52" height="18" rx="4" fill="rgba(239,159,39,.12)" stroke="rgba(239,159,39,.3)" stroke-width=".8"/>
+        <text x="106" y="136" font-size="7" fill="#FAC775" text-anchor="middle" font-family="DM Sans,sans-serif">prob = 0.65</text>
+        <line x1="182" y1="108" x2="188" y2="124" stroke="rgba(226,75,74,.35)" stroke-width=".8"/>
+        <rect x="160" y="124" width="52" height="18" rx="4" fill="rgba(29,158,117,.1)" stroke="rgba(29,158,117,.25)" stroke-width=".8"/>
+        <text x="186" y="136" font-size="7" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">prob = 0.20</text>
+        <!-- NO RIGHT NODE -->
+        <rect x="240" y="46" width="120" height="22" rx="5" fill="rgba(83,74,183,.18)" stroke="rgba(83,74,183,.35)" stroke-width=".8"/>
+        <text x="300" y="61" font-size="7.5" fill="#C4C0F5" text-anchor="middle" font-family="DM Sans,sans-serif">pass_rate &gt; 95%?</text>
+        <line x1="270" y1="68" x2="255" y2="86" stroke="rgba(29,158,117,.4)" stroke-width=".8"/>
+        <text x="252" y="80" font-size="6.5" fill="rgba(29,158,117,.6)" font-family="DM Sans,sans-serif">YES</text>
+        <line x1="330" y1="68" x2="345" y2="86" stroke="rgba(226,75,74,.35)" stroke-width=".8"/>
+        <text x="330" y="80" font-size="6.5" fill="rgba(226,75,74,.5)" font-family="DM Sans,sans-serif">NO</text>
+        <!-- odo missing node -->
+        <rect x="210" y="86" width="90" height="22" rx="5" fill="rgba(83,74,183,.14)" stroke="rgba(83,74,183,.28)" stroke-width=".8"/>
+        <text x="255" y="101" font-size="7.5" fill="#C4C0F5" text-anchor="middle" font-family="DM Sans,sans-serif">odo_missing?</text>
+        <line x1="232" y1="108" x2="224" y2="124" stroke="rgba(29,158,117,.4)" stroke-width=".8"/>
+        <rect x="196" y="124" width="52" height="18" rx="4" fill="rgba(239,159,39,.1)" stroke="rgba(239,159,39,.25)" stroke-width=".8"/>
+        <text x="222" y="136" font-size="7" fill="#FAC775" text-anchor="middle" font-family="DM Sans,sans-serif">prob = 0.55</text>
+        <line x1="278" y1="108" x2="284" y2="124" stroke="rgba(226,75,74,.32)" stroke-width=".8"/>
+        <rect x="258" y="124" width="52" height="18" rx="4" fill="rgba(29,158,117,.08)" stroke="rgba(29,158,117,.2)" stroke-width=".8"/>
+        <text x="284" y="136" font-size="7" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">prob = 0.35</text>
+        <!-- T001 result -->
+        <rect x="316" y="86" width="60" height="26" rx="5" fill="rgba(29,158,117,.1)" stroke="rgba(29,158,117,.3)" stroke-width=".8"/>
+        <text x="346" y="98" font-size="7.5" font-weight="600" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">prob = 0.08</text>
+        <text x="346" y="108" font-size="7" fill="rgba(159,225,203,.6)" text-anchor="middle" font-family="DM Sans,sans-serif">← T001 here</text>
+      </svg>
+      <div style="font-size:7.5px;color:rgba(196,192,245,.45);text-align:center;margin-top:3px">Each tree explores different feature combinations. N trees together = library of fraud fingerprints.</div>
+    </div>
+    <!-- OUTPUT -->
+    <div style="display:flex;justify-content:center;margin-top:5px">
+      <svg width="40" height="14" viewBox="0 0 40 14"><line x1="20" y1="0" x2="20" y2="8" stroke="rgba(196,192,245,.4)" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite"/><path d="M15 6L20 13L25 6" fill="none" stroke="rgba(196,192,245,.4)" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </div>
+    <div style="text-align:center;background:rgba(239,159,39,.1);border:.5px solid rgba(239,159,39,.28);border-radius:5px;padding:4px 8px;font-size:8.5px;color:var(--al);font-weight:500">fraud_probability per test_id → 0.00 to 1.00</div>
+  </div>
+
+  <!-- OUTPUT TABLE -->
+  <div class="tbl-wrap a7">
+    <div class="tbl-ttl">After XGBoost — both scores now available</div>
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>test_id</th><th>duration</th><th>rule_fired</th>
+          <th style="color:rgba(175,169,236,.5)">IF_score</th>
+          <th style="color:rgba(196,192,245,.55)">xgb_prob</th>
+          <th style="color:rgba(240,153,123,.5)">domain</th>
+          <th style="color:rgba(250,199,117,.65);font-weight:600">risk_score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="tr-h">
+          <td>T004</td><td>9 min ⚑</td><td>1 ⚑</td>
+          <td style="color:var(--pl)">0.94</td>
+          <td style="color:var(--xgl)">0.88</td>
+          <td style="color:var(--cl)">1.00</td>
+          <td style="color:var(--al);font-weight:700">0.91</td>
+        </tr>
+        <tr class="tr-n">
+          <td>T001</td><td>52 min</td><td>0</td>
+          <td style="color:rgba(175,169,236,.45)">0.08</td>
+          <td style="color:rgba(196,192,245,.4)">0.06</td>
+          <td style="color:rgba(240,153,123,.35)">0.00</td>
+          <td style="color:rgba(250,199,117,.4)">0.07</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- COMPOSITE -->
+  <div class="comp a8">
+    <div class="comp-t">Composite risk score — three signals → one score</div>
+    <div class="comp-formula">
+      risk = (<span style="color:var(--pl)">0.50 × isolation_forest</span>)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (<span style="color:var(--xgl)">0.30 × xgboost_prob</span>)<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (<span style="color:var(--cl)">0.20 × domain_rule</span>)
+    </div>
+    <div class="comp-bars">
+      <div class="cb-row">
+        <div class="cb-lbl" style="color:var(--pl)">Isolation Forest (T004)</div>
+        <div class="cb-wrap"><div class="cb-fill" style="--w:94%;background:#7F77DD"></div></div>
+        <div class="cb-val" style="color:var(--pl)">0.94</div>
+      </div>
+      <div class="cb-row">
+        <div class="cb-lbl" style="color:var(--xgl)">XGBoost probability</div>
+        <div class="cb-wrap"><div class="cb-fill" style="--w:88%;background:#534AB7"></div></div>
+        <div class="cb-val" style="color:var(--xgl)">0.88</div>
+      </div>
+      <div class="cb-row">
+        <div class="cb-lbl" style="color:var(--cl)">Domain rule fired</div>
+        <div class="cb-wrap"><div class="cb-fill" style="--w:100%;background:#D85A30"></div></div>
+        <div class="cb-val" style="color:var(--cl)">1.00</div>
+      </div>
+    </div>
+    <div class="comp-result">
+      <div class="cr-math">(0.50×0.94)+(0.30×0.88)+(0.20×1.00)</div>
+      <div class="cr-eq">=</div>
+      <div class="cr-score">0.91</div>
+      <div class="cr-band">HIGH risk</div>
+    </div>
+  </div>
+
+  <!-- ENFORCEMENT -->
+  <div class="enf a9">
+    <div class="enf-t">Enforcement receives — ranked list · specific test IDs · plain English reason</div>
+    <div class="rank-item">
+      <span class="rb rb-h">Rank 1 · 0.91</span>
+      <span class="rt">Tester T-0042 · Tests 004, 007 · Duration 9 min · Pass rate 97.8% vs peer 81.2% · Rule fired · 3 consecutive months flagged</span>
+    </div>
+    <div class="rank-item">
+      <span class="rb rb-m">Rank 2 · 0.54</span>
+      <span class="rt">Tester T-0103 · 2 flagged tests · Odometer missing both · Statistically unusual — no rule fired · Monitor</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- RIGHT COLUMN -->
+<div class="right-col a5">
+  <div class="why-xg">
+    <div class="wx-t">Why XGBoost Standard ✓</div>
+    <div class="wx-i">Learns from confirmed fraud — knows what real fraud looks like</div>
+    <div class="wx-i">Catches fraud resembling known cases even if not statistically unusual</div>
+    <div class="wx-i">Handles mixed feature types well</div>
+    <div class="wx-i">Feature importance — explainable to courts</div>
+    <div class="wx-i">Retrains monthly as labelled set grows</div>
+    <div class="wx-i" style="color:rgba(196,192,245,.4);font-size:7px;margin-top:2px">Stratified k-fold cross-validation — prevents overfitting on small labelled set</div>
+  </div>
+
+  <div style="background:rgba(239,159,39,.06);border:.5px solid rgba(239,159,39,.22);border-radius:8px;padding:8px 10px;margin-bottom:6px">
+    <div style="font-size:9px;font-weight:600;color:var(--al);margin-bottom:4px">Validation 2 — Controlled Trial</div>
+    <div style="font-size:7.5px;color:var(--t2);padding:2px 0;line-height:1.5"><strong style="color:var(--al)">Region A</strong> — enforcement guided by composite risk score</div>
+    <div style="font-size:7.5px;color:var(--t2);padding:2px 0;border-top:.5px solid var(--br);line-height:1.5"><strong style="color:var(--gl)">Region B</strong> — traditional methods, no model (baseline)</div>
+    <div style="font-size:7.5px;color:var(--t2);padding:2px 0;border-top:.5px solid var(--br);line-height:1.5">After <strong style="color:#fff">3 months</strong> — compare confirmed fraud found per enforcement visit in each region</div>
+    <div style="font-size:7.5px;color:var(--gl);padding:2px 0;border-top:.5px solid var(--br);line-height:1.5;font-weight:500">Expected: Region A finds 40–80× more fraud per visit than Region B</div>
+  </div>
+
+  <div class="anon">
+    <div class="an-t">Anonymisation + GDPR</div>
+    <div class="an-i">Only test IDs and tester IDs flow through the model — no names, no addresses, no personal details. The model detects fraud from behaviour, not identity.</div>
+    <div class="an-i">Personal details unlocked only at point of formal enforcement investigation by an authorised officer.</div>
+    <div class="an-i"><strong style="color:var(--gl)">Lawful basis:</strong> Article 6(1)(e) UK GDPR — Public Task. DVSA's statutory duty under the Road Traffic Act 1988 gives legal authority to process tester data for fraud detection without individual consent.</div>
+    <div class="an-i"><strong style="color:var(--gl)">Data minimisation:</strong> only the data strictly needed for fraud detection is processed — nothing extra collected or retained beyond the investigation purpose.</div>
+  </div>
+</div>
+
+</div>
+</div>
+</body>
+</html>
+`,
+  `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DVSA Slide 5 — The Living System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --g:#1D9E75;--gl:#9FE1CB;
+  --p:#7F77DD;--pl:#AFA9EC;
+  --xg:#534AB7;--xgl:#C4C0F5;
+  --r:#E24B4A;--rl:#F09595;
+  --a:#EF9F27;--al:#FAC775;
+  --b:#378ADD;--bl:#85B7EB;
+  --llm:#E07B3A;--llml:#F5B07A;
+  --bg:#07101e;--br:rgba(255,255,255,.07);
+  --t:rgba(255,255,255,.94);--t2:rgba(159,225,203,.72);--t3:rgba(159,225,203,.36);
+}
+html,body{width:100%;height:100vh;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t);display:flex;align-items:center;justify-content:center}
+.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(29,158,117,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(29,158,117,.05) 1px,transparent 1px);background-size:42px 42px;pointer-events:none}
+.slide{position:relative;z-index:1;width:100%;max-width:1060px;padding:12px 36px;display:flex;flex-direction:column;align-items:center}
+
+@keyframes fU{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fI{from{opacity:0}to{opacity:1}}
+@keyframes xW{from{width:0}to{width:160px}}
+@keyframes fR{0%{stroke-dashoffset:28}100%{stroke-dashoffset:0}}
+@keyframes fL{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-36}}
+@keyframes fD{0%{stroke-dashoffset:20}100%{stroke-dashoffset:0}}
+@keyframes llmPulse{0%,100%{opacity:.35}50%{opacity:.65}}
+
+.a1{animation:fU .5s ease .1s both}
+.a2{animation:fU .5s ease .25s both}
+.a4{animation:xW .7s ease .45s both;display:block}
+
+.stag{font-size:10px;letter-spacing:.18em;color:var(--g);text-transform:uppercase;margin-bottom:4px}
+.stit{font-size:18px;font-weight:600;color:#fff;text-align:center;line-height:1.25;margin-bottom:3px}
+.stit em{color:var(--g);font-style:normal}
+.dline{height:2px;background:var(--g);width:0;margin:0 auto 6px}
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="slide">
+
+<div class="stag a1">Slide 5 of 5 — The Living System</div>
+<h2 class="stit a2">The complete pipeline — <em>feedback · enhancements · how the system matures</em></h2>
+<div class="dline a4"></div>
+
+<svg width="100%" viewBox="0 0 960 490" style="max-height:468px;opacity:0;animation:fI .5s ease .5s both">
+<defs>
+  <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round"/></marker>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#E24B4A" stroke-width="1.5" stroke-linecap="round"/></marker>
+  <marker id="axg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#534AB7" stroke-width="1.5" stroke-linecap="round"/></marker>
+  <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#378ADD" stroke-width="1.5" stroke-linecap="round"/></marker>
+  <marker id="aa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-linecap="round"/></marker>
+  <marker id="allm" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#E07B3A" stroke-width="1.5" stroke-linecap="round"/></marker>
+  <marker id="ag-rev" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M8 1.5L2 5L8 8.5" fill="none" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round"/></marker>
+  <marker id="ar-rev" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M8 1.5L2 5L8 8.5" fill="none" stroke="#E24B4A" stroke-width="1.5" stroke-linecap="round"/></marker>
+</defs>
+
+<!-- ═══════════════════════════════════
+     LLM MONITORING LINE — ABOVE pipeline
+     ORANGE — distinct from all other colours
+     ═══════════════════════════════════ -->
+<path d="M820 22 L690 22 L562 22 L434 22 L306 22 L178 22 L55 22"
+  fill="none" stroke="#E07B3A" stroke-width="1.8" stroke-dasharray="7 4"
+  style="animation:llmPulse 2.5s ease infinite,fI .5s ease 2s both;opacity:0"
+  marker-end="url(#allm)"/>
+<text x="110" y="16" font-size="7.5" fill="rgba(224,123,58,.55)" font-family="DM Sans,sans-serif" style="animation:llmPulse 2.5s ease infinite">👁</text>
+<text x="270" y="16" font-size="7.5" fill="rgba(224,123,58,.55)" font-family="DM Sans,sans-serif" style="animation:llmPulse 2.5s ease infinite .4s">👁</text>
+<text x="430" y="16" font-size="7.5" fill="rgba(224,123,58,.55)" font-family="DM Sans,sans-serif" style="animation:llmPulse 2.5s ease infinite .8s">👁</text>
+<text x="590" y="16" font-size="7.5" fill="rgba(224,123,58,.55)" font-family="DM Sans,sans-serif" style="animation:llmPulse 2.5s ease infinite 1.2s">👁</text>
+<text x="750" y="16" font-size="7.5" fill="rgba(224,123,58,.55)" font-family="DM Sans,sans-serif" style="animation:llmPulse 2.5s ease infinite 1.6s">👁</text>
+<text x="828" y="16" font-size="7.5" fill="rgba(224,123,58,.6)" font-family="DM Sans,sans-serif" style="animation:llmPulse 2.5s ease infinite">LLM agent — monitors all stages</text>
+
+<!-- ═══════════════════════════════
+     PIPELINE BOXES  y=30 to y=82
+     ═══════════════════════════════ -->
+
+<!-- SQL -->
+<g style="animation:fU .4s ease .65s both;opacity:0">
+  <rect x="8" y="30" width="94" height="52" rx="7" fill="rgba(29,158,117,.1)" stroke="rgba(29,158,117,.3)" stroke-width=".8"/>
+  <text x="55" y="50" font-size="8" font-weight="600" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">SQL library</text>
+  <text x="55" y="62" font-size="7" fill="rgba(159,225,203,.55)" text-anchor="middle" font-family="DM Sans,sans-serif">enriched rows</text>
+  <text x="55" y="74" font-size="7" fill="rgba(159,225,203,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">+ fraud labels</text>
+</g>
+<line x1="102" y1="56" x2="124" y2="56" stroke="#1D9E75" stroke-width="1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite" marker-end="url(#ag)"/>
+
+<!-- ISOLATION FOREST -->
+<g style="animation:fU .4s ease .78s both;opacity:0">
+  <rect x="126" y="30" width="104" height="52" rx="7" fill="rgba(127,119,221,.1)" stroke="rgba(127,119,221,.28)" stroke-width=".8"/>
+  <text x="178" y="50" font-size="8" font-weight="600" fill="#AFA9EC" text-anchor="middle" font-family="DM Sans,sans-serif">Isolation Forest</text>
+  <text x="178" y="62" font-size="7" fill="rgba(175,169,236,.55)" text-anchor="middle" font-family="DM Sans,sans-serif">anomaly scores</text>
+  <text x="178" y="74" font-size="7" fill="rgba(175,169,236,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">per test_id</text>
+</g>
+<line x1="230" y1="56" x2="252" y2="56" stroke="#7F77DD" stroke-width="1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite;animation-delay:.15s" marker-end="url(#axg)"/>
+
+<!-- XGBOOST -->
+<g style="animation:fU .4s ease .9s both;opacity:0">
+  <rect x="254" y="30" width="104" height="52" rx="7" fill="rgba(83,74,183,.1)" stroke="rgba(83,74,183,.28)" stroke-width=".8"/>
+  <text x="306" y="50" font-size="8" font-weight="600" fill="#C4C0F5" text-anchor="middle" font-family="DM Sans,sans-serif">XGBoost</text>
+  <text x="306" y="62" font-size="7" fill="rgba(196,192,245,.55)" text-anchor="middle" font-family="DM Sans,sans-serif">fraud probability</text>
+  <text x="306" y="74" font-size="7" fill="rgba(196,192,245,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">per test_id</text>
+</g>
+<line x1="358" y1="56" x2="380" y2="56" stroke="#534AB7" stroke-width="1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite;animation-delay:.3s" marker-end="url(#ag)"/>
+
+<!-- RISK RANKING -->
+<g style="animation:fU .4s ease 1s both;opacity:0">
+  <rect x="382" y="30" width="104" height="52" rx="7" fill="rgba(239,159,39,.08)" stroke="rgba(239,159,39,.22)" stroke-width=".8"/>
+  <text x="434" y="50" font-size="8" font-weight="600" fill="#FAC775" text-anchor="middle" font-family="DM Sans,sans-serif">Risk ranking</text>
+  <text x="434" y="62" font-size="7" fill="rgba(250,199,117,.55)" text-anchor="middle" font-family="DM Sans,sans-serif">composite score</text>
+  <text x="434" y="74" font-size="7" fill="rgba(250,199,117,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">HIGH · MED · LOW</text>
+</g>
+<line x1="486" y1="56" x2="508" y2="56" stroke="#EF9F27" stroke-width="1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite;animation-delay:.45s" marker-end="url(#ag)"/>
+
+<!-- ENFORCEMENT -->
+<g style="animation:fU .4s ease 1.1s both;opacity:0">
+  <rect x="510" y="30" width="104" height="52" rx="7" fill="rgba(55,138,221,.1)" stroke="rgba(55,138,221,.28)" stroke-width=".8"/>
+  <text x="562" y="50" font-size="8" font-weight="600" fill="#85B7EB" text-anchor="middle" font-family="DM Sans,sans-serif">Enforcement</text>
+  <text x="562" y="62" font-size="7" fill="rgba(133,183,235,.55)" text-anchor="middle" font-family="DM Sans,sans-serif">investigates</text>
+  <text x="562" y="74" font-size="7" fill="rgba(133,183,235,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">flagged tests</text>
+</g>
+<line x1="614" y1="56" x2="636" y2="56" stroke="#378ADD" stroke-width="1" stroke-dasharray="3 2" style="animation:fR .9s linear infinite;animation-delay:.6s" marker-end="url(#ar)"/>
+
+<!-- OUTCOME -->
+<g style="animation:fU .4s ease 1.2s both;opacity:0">
+  <rect x="638" y="30" width="104" height="52" rx="7" fill="rgba(226,75,74,.08)" stroke="rgba(226,75,74,.28)" stroke-width=".8"/>
+  <text x="690" y="50" font-size="8" font-weight="600" fill="#F09595" text-anchor="middle" font-family="DM Sans,sans-serif">Outcome</text>
+  <text x="690" y="62" font-size="7" fill="rgba(240,153,123,.55)" text-anchor="middle" font-family="DM Sans,sans-serif">fraud / clean</text>
+  <text x="690" y="74" font-size="7" fill="rgba(240,153,123,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">verdict returned</text>
+</g>
+
+<!-- ═══════════════════════════════════════
+     FEEDBACK ARROWS
+     RED  → XGBoost (labelled set grows)
+     GREEN → SQL library + Isolation Forest
+     ═══════════════════════════════════════ -->
+
+<!-- RED: Outcome → XGBoost -->
+<path d="M742 56 L780 56 L780 102 L306 102 L306 82"
+  fill="none" stroke="#E24B4A" stroke-width="1.1" stroke-dasharray="5 3"
+  marker-end="url(#ar-rev)"
+  style="animation:fL 1.8s linear infinite,fI .4s ease 1.35s both;opacity:0"/>
+<rect x="350" y="92" width="280" height="12" rx="3" fill="#07101e"/>
+<text x="490" y="101" font-size="7.5" fill="rgba(226,75,74,.6)" text-anchor="middle" font-family="DM Sans,sans-serif">verdict → labelled set grows → XGBoost retrains monthly</text>
+
+<!-- GREEN: Outcome → SQL + Isolation Forest -->
+<path d="M742 56 L800 56 L800 112 L55 112 L55 82"
+  fill="none" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 3" opacity=".5"
+  marker-end="url(#ag-rev)"
+  style="animation:fL 2.2s linear infinite,fI .4s ease 1.45s both;opacity:0"/>
+<path d="M800 112 L178 112 L178 82"
+  fill="none" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 3" opacity=".35"
+  marker-end="url(#ag-rev)"
+  style="animation:fL 2.4s linear infinite,fI .4s ease 1.5s both;opacity:0"/>
+<rect x="60" y="103" width="235" height="12" rx="3" fill="#07101e"/>
+<text x="177" y="112" font-size="7.5" fill="rgba(29,158,117,.45)" text-anchor="middle" font-family="DM Sans,sans-serif">fraud_label → SQL library + Isolation Forest updated</text>
+
+<!-- ═══════════════════════════════════════
+     FUTURE DEVELOPMENT
+     ═══════════════════════════════════════ -->
+
+<line x1="690" y1="82" x2="690" y2="130"
+  stroke="rgba(250,199,117,.5)" stroke-width="1.1" stroke-dasharray="4 3"
+  style="animation:fD .9s linear infinite,fI .4s ease 1.5s both;opacity:0"
+  marker-end="url(#aa)"/>
+<text x="702" y="107" font-size="7" fill="rgba(250,199,117,.45)" font-family="DM Sans,sans-serif">future development</text>
+
+<g style="animation:fU .4s ease 1.55s both;opacity:0">
+  <rect x="624" y="130" width="132" height="26" rx="7" fill="rgba(239,159,39,.1)" stroke="rgba(239,159,39,.38)" stroke-width=".8"/>
+  <text x="690" y="145" font-size="8.5" font-weight="600" fill="#FAC775" text-anchor="middle" font-family="DM Sans,sans-serif">Future enhancements</text>
+  <text x="690" y="153" font-size="7" fill="rgba(250,199,117,.48)" text-anchor="middle" font-family="DM Sans,sans-serif">governance approval required</text>
+</g>
+
+<!-- Arrows to 3 enhancement boxes -->
+<line x1="642" y1="156" x2="182" y2="188" stroke="rgba(55,138,221,.4)" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#ab)" style="animation:fI .4s ease 1.7s both;opacity:0"/>
+<line x1="690" y1="156" x2="476" y2="188" stroke="rgba(127,119,221,.4)" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#axg)" style="animation:fI .4s ease 1.75s both;opacity:0"/>
+<line x1="738" y1="156" x2="762" y2="188" stroke="rgba(224,123,58,.5)" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#allm)" style="animation:fI .4s ease 1.8s both;opacity:0"/>
+
+<!-- ═══════════════════════════════════
+     ENHANCEMENT BOXES  y=188
+     ═══════════════════════════════════ -->
+
+<!-- ANPR -->
+<g style="animation:fU .4s ease 1.82s both;opacity:0">
+  <rect x="76" y="188" width="212" height="62" rx="7" fill="rgba(55,138,221,.08)" stroke="rgba(55,138,221,.22)" stroke-width=".8"/>
+  <text x="182" y="204" font-size="8.5" font-weight="600" fill="#85B7EB" text-anchor="middle" font-family="DM Sans,sans-serif">ANPR + roadside cameras</text>
+  <line x1="76" y1="210" x2="288" y2="210" stroke="rgba(55,138,221,.12)" stroke-width=".5"/>
+  <text x="83" y="222" font-size="7.5" fill="rgba(133,183,235,.6)" font-family="DM Sans,sans-serif">Vehicle elsewhere during test = ghost MOT</text>
+  <text x="83" y="233" font-size="7.5" fill="rgba(133,183,235,.5)" font-family="DM Sans,sans-serif">Irrefutable location evidence</text>
+  <rect x="83" y="240" width="116" height="9" rx="3" fill="rgba(55,138,221,.12)" stroke="rgba(55,138,221,.22)" stroke-width=".5"/>
+  <text x="141" y="247" font-size="7" fill="#85B7EB" text-anchor="middle" font-family="DM Sans,sans-serif">Data sharing agreement needed</text>
+</g>
+
+<!-- AUTOENCODER -->
+<g style="animation:fU .4s ease 1.88s both;opacity:0">
+  <rect x="364" y="188" width="224" height="62" rx="7" fill="rgba(127,119,221,.08)" stroke="rgba(127,119,221,.22)" stroke-width=".8"/>
+  <text x="476" y="204" font-size="8.5" font-weight="600" fill="#AFA9EC" text-anchor="middle" font-family="DM Sans,sans-serif">Convolutional Autoencoder</text>
+  <line x1="364" y1="210" x2="588" y2="210" stroke="rgba(127,119,221,.12)" stroke-width=".5"/>
+  <text x="371" y="222" font-size="7.5" fill="rgba(175,169,236,.6)" font-family="DM Sans,sans-serif">Learns what real CCTV inspection looks like</text>
+  <text x="371" y="233" font-size="7.5" fill="rgba(175,169,236,.5)" font-family="DM Sans,sans-serif">Flags 20-second non-inspections. No labels.</text>
+  <rect x="371" y="240" width="96" height="9" rx="3" fill="rgba(127,119,221,.12)" stroke="rgba(127,119,221,.22)" stroke-width=".5"/>
+  <text x="419" y="247" font-size="7" fill="#AFA9EC" text-anchor="middle" font-family="DM Sans,sans-serif">ICO video guidance needed</text>
+</g>
+
+<!-- LLM AGENT — ORANGE -->
+<g style="animation:fU .4s ease 1.94s both;opacity:0">
+  <rect x="648" y="188" width="224" height="62" rx="7" fill="rgba(224,123,58,.08)" stroke="rgba(224,123,58,.28)" stroke-width=".8"/>
+  <text x="760" y="204" font-size="8.5" font-weight="600" fill="#F5B07A" text-anchor="middle" font-family="DM Sans,sans-serif">LLM Enforcement Agent</text>
+  <line x1="648" y1="210" x2="872" y2="210" stroke="rgba(224,123,58,.12)" stroke-width=".5"/>
+  <text x="655" y="222" font-size="7.5" fill="rgba(245,176,122,.6)" font-family="DM Sans,sans-serif">Plain English queries · auto-draft reports</text>
+  <text x="655" y="233" font-size="7.5" fill="rgba(245,176,122,.5)" font-family="DM Sans,sans-serif">Near-term realistic · governance first</text>
+  <rect x="655" y="240" width="96" height="9" rx="3" fill="rgba(224,123,58,.12)" stroke="rgba(224,123,58,.25)" stroke-width=".5"/>
+  <text x="703" y="247" font-size="7" fill="#F5B07A" text-anchor="middle" font-family="DM Sans,sans-serif">Human always decides</text>
+</g>
+
+<!-- ═══════════════════════════════════
+     VALIDATION 2  — arrow DOWN
+     ═══════════════════════════════════ -->
+
+<line x1="690" y1="156" x2="690" y2="262"
+  stroke="rgba(239,159,39,.35)" stroke-width="1" stroke-dasharray="4 3"
+  style="animation:fD .9s linear infinite,fI .4s ease 1.95s both;opacity:0"
+  marker-end="url(#aa)"/>
+
+<g style="animation:fU .4s ease 2.05s both;opacity:0">
+  <rect x="466" y="263" width="448" height="56" rx="7" fill="rgba(239,159,39,.07)" stroke="rgba(239,159,39,.26)" stroke-width=".8"/>
+  <text x="690" y="279" font-size="9" font-weight="600" fill="#FAC775" text-anchor="middle" font-family="DM Sans,sans-serif">Validation 2 — Controlled Trial · after 3 months live</text>
+  <line x1="466" y1="285" x2="914" y2="285" stroke="rgba(239,159,39,.13)" stroke-width=".5"/>
+  <text x="558" y="297" font-size="8" font-weight="600" fill="rgba(226,75,74,.75)" font-family="DM Sans,sans-serif">Region A</text>
+  <text x="558" y="307" font-size="7.5" fill="rgba(240,153,123,.6)" font-family="DM Sans,sans-serif">model-guided enforcement</text>
+  <text x="690" y="300" font-size="8" fill="rgba(250,199,117,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">vs</text>
+  <text x="800" y="297" font-size="8" font-weight="600" fill="rgba(29,158,117,.75)" font-family="DM Sans,sans-serif">Region B</text>
+  <text x="800" y="307" font-size="7.5" fill="rgba(159,225,203,.55)" font-family="DM Sans,sans-serif">traditional methods baseline</text>
+  <text x="690" y="314" font-size="7.5" fill="rgba(250,199,117,.58)" text-anchor="middle" font-family="DM Sans,sans-serif">Metric: confirmed fraud per enforcement visit · Region A expected significantly higher</text>
+</g>
+
+<!-- ═══════════════════════════════════════════
+     ALGORITHM ROLE SWAP BOX — bottom left
+     ═══════════════════════════════════════════ -->
+
+<g style="animation:fU .5s ease 2.2s both;opacity:0">
+  <rect x="8" y="263" width="448" height="100" rx="8" fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.1)" stroke-width=".8"/>
+  <text x="232" y="279" font-size="8.5" font-weight="600" fill="rgba(255,255,255,.7)" text-anchor="middle" font-family="DM Sans,sans-serif">How the algorithms evolve over time</text>
+  <line x1="8" y1="285" x2="456" y2="285" stroke="rgba(255,255,255,.07)" stroke-width=".5"/>
+
+  <!-- TODAY column -->
+  <text x="100" y="298" font-size="8" font-weight="600" fill="rgba(175,169,236,.7)" text-anchor="middle" font-family="DM Sans,sans-serif">Today — small labelled set</text>
+  <rect x="20" y="303" width="160" height="16" rx="4" fill="rgba(127,119,221,.15)" stroke="rgba(127,119,221,.35)" stroke-width=".7"/>
+  <text x="100" y="315" font-size="7.5" font-weight="600" fill="#AFA9EC" text-anchor="middle" font-family="DM Sans,sans-serif">Isolation Forest — PRIMARY (50%)</text>
+  <rect x="20" y="322" width="160" height="16" rx="4" fill="rgba(83,74,183,.1)" stroke="rgba(83,74,183,.28)" stroke-width=".7"/>
+  <text x="100" y="334" font-size="7.5" fill="#C4C0F5" text-anchor="middle" font-family="DM Sans,sans-serif">XGBoost — secondary (30%)</text>
+  <text x="100" y="349" font-size="7" fill="rgba(175,169,236,.45)" text-anchor="middle" font-family="DM Sans,sans-serif">Unsupervised leads · small fraud library</text>
+  <rect x="20" y="354" width="160" height="2" rx="1" fill="rgba(127,119,221,.3)"/>
+
+  <!-- ARROW between columns -->
+  <text x="232" y="330" font-size="16" fill="rgba(250,199,117,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">→</text>
+  <text x="232" y="343" font-size="7" fill="rgba(250,199,117,.4)" text-anchor="middle" font-family="DM Sans,sans-serif">matures</text>
+
+  <!-- MATURE column -->
+  <text x="364" y="298" font-size="8" font-weight="600" fill="rgba(196,192,245,.7)" text-anchor="middle" font-family="DM Sans,sans-serif">Mature — large labelled set</text>
+  <rect x="296" y="303" width="152" height="16" rx="4" fill="rgba(83,74,183,.18)" stroke="rgba(83,74,183,.45)" stroke-width=".7"/>
+  <text x="372" y="315" font-size="7.5" font-weight="600" fill="#C4C0F5" text-anchor="middle" font-family="DM Sans,sans-serif">XGBoost — PRIMARY (60%+)</text>
+  <rect x="296" y="322" width="152" height="16" rx="4" fill="rgba(127,119,221,.08)" stroke="rgba(127,119,221,.22)" stroke-width=".7"/>
+  <text x="372" y="334" font-size="7.5" fill="#AFA9EC" text-anchor="middle" font-family="DM Sans,sans-serif">Isolation Forest — safety net</text>
+  <text x="372" y="349" font-size="7" fill="rgba(175,169,236,.45)" text-anchor="middle" font-family="DM Sans,sans-serif">Catches novel fraud XGBoost hasn't seen</text>
+  <rect x="296" y="354" width="152" height="2" rx="1" fill="rgba(83,74,183,.35)"/>
+</g>
+
+<!-- ═══════════════════════════════════
+     CLOSING STATEMENT
+     ═══════════════════════════════════ -->
+
+<g style="animation:fU .6s ease 2.4s both;opacity:0">
+  <rect x="8" y="372" width="944" height="42" rx="9" fill="rgba(29,158,117,.08)" stroke="rgba(29,158,117,.3)" stroke-width="1"/>
+  <text x="480" y="389" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle" font-family="DM Sans,sans-serif">"Deployable with what DVSA already has ·</text>
+  <text x="480" y="406" font-size="11" font-weight="600" fill="#9FE1CB" text-anchor="middle" font-family="DM Sans,sans-serif">explainable to courts · self-improving — and designed to evolve as the data grows."</text>
+</g>
+
+</svg>
+
+</div>
+</body>
+</html>
+`
+];
+
+// Load all slides into iframes
+for(let i = 0; i < 5; i++){
+  const iframe = document.getElementById('s'+(i+1));
+  const blob = new Blob([slideContents[i]], {type: 'text/html'});
+  iframe.src = URL.createObjectURL(blob);
+}
+
+function jump(n){
+  document.getElementById('s'+cur).classList.remove('active');
+  document.querySelectorAll('.ndot')[cur-1].classList.remove('on');
+  cur = n;
+  document.getElementById('s'+cur).classList.add('active');
+  document.querySelectorAll('.ndot')[cur-1].classList.add('on');
+  document.getElementById('cnt').textContent = cur + ' / 5';
+  document.getElementById('slbl').textContent = labels[cur-1];
+}
+
+function go(d){
+  let n = cur + d;
+  if(n<1) n=1;
+  if(n>5) n=5;
+  jump(n);
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowRight'||e.key===' ') go(1);
+  if(e.key==='ArrowLeft') go(-1);
+  if(e.key>='1'&&e.key<='5') jump(parseInt(e.key));
+});
+</script>
+</body>
+</html>

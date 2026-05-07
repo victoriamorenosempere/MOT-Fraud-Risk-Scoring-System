@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Technical Flow</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;min-height:100vh;background:#f7f8fa;font-family:'DM Sans',sans-serif;color:#1a1a2e;padding:24px 32px}
+
+@keyframes fR{0%{stroke-dashoffset:28}100%{stroke-dashoffset:0}}
+@keyframes fL{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-36}}
+@keyframes llm{0%,100%{opacity:.4}50%{opacity:.75}}
+
+h1{font-size:15px;font-weight:600;color:#1a1a2e;margin-bottom:2px}
+.sub{font-size:10px;color:#888;margin-bottom:16px}
+
+/* LEGEND */
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid #e0e0e8}
+.li{display:flex;align-items:center;gap:6px;font-size:9px;color:#444}
+.ld{width:28px;height:3px;border-radius:2px;flex-shrink:0}
+.ld-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<h1>MOT Fraud Detection — Technical Data Flow with Software Names</h1>
+<div class="sub">How data moves through the system · SQL joins · feedback loop · monthly retraining</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="li"><div class="ld" style="background:#378ADD"></div>Raw data ingestion</div>
+  <div class="li"><div class="ld" style="background:#1D9E75"></div>SQL enrichment + enriched table</div>
+  <div class="li"><div class="ld" style="background:#7F77DD"></div>Isolation Forest scoring</div>
+  <div class="li"><div class="ld" style="background:#534AB7"></div>XGBoost scoring</div>
+  <div class="li"><div class="ld" style="background:#EF9F27"></div>Composite score → enforcement</div>
+  <div class="li"><div class="ld" style="background:#E24B4A"></div>Feedback → XGBoost retraining</div>
+  <div class="li"><div class="ld" style="background:#1D9E75;opacity:.5"></div>Feedback → SQL library update</div>
+  <div class="li"><div class="ld" style="background:#E07B3A;border-top:2px dashed #E07B3A;background:none;height:0"></div>LLM agent monitoring (future)</div>
+</div>
+
+<svg width="100%" viewBox="0 0 980 500" style="background:#fff;border-radius:12px;border:1px solid #e0e0e8">
+<defs>
+  <marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#1D9E75" stroke-width="1.8" stroke-linecap="round"/></marker>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#E24B4A" stroke-width="1.8" stroke-linecap="round"/></marker>
+  <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#378ADD" stroke-width="1.8" stroke-linecap="round"/></marker>
+  <marker id="ap" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#7F77DD" stroke-width="1.8" stroke-linecap="round"/></marker>
+  <marker id="axg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#534AB7" stroke-width="1.8" stroke-linecap="round"/></marker>
+  <marker id="aa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#EF9F27" stroke-width="1.8" stroke-linecap="round"/></marker>
+  <marker id="allm" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#E07B3A" stroke-width="1.8" stroke-linecap="round"/></marker>
+  <marker id="ag-rev" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M8 1.5L2 5L8 8.5" fill="none" stroke="#1D9E75" stroke-width="1.8" stroke-linecap="round"/></marker>
+  <marker id="ar-rev" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M8 1.5L2 5L8 8.5" fill="none" stroke="#E24B4A" stroke-width="1.8" stroke-linecap="round"/></marker>
+</defs>
+
+<!-- ═══════════════════════════════════════
+     LLM LINE — orange dashed ABOVE pipeline
+     ═══════════════════════════════════════ -->
+<path d="M840 22 L700 22 L560 22 L420 22 L280 22 L140 22 L60 22"
+  fill="none" stroke="#E07B3A" stroke-width="1.5" stroke-dasharray="8 5"
+  style="animation:llm 2.5s ease infinite"
+  marker-end="url(#allm)" opacity=".55"/>
+<text x="75" y="18" font-size="8" fill="#E07B3A" font-family="DM Sans,sans-serif" opacity=".6" style="animation:llm 2.5s ease infinite">👁</text>
+<text x="255" y="18" font-size="8" fill="#E07B3A" font-family="DM Sans,sans-serif" opacity=".6" style="animation:llm 2.5s ease infinite .5s">👁</text>
+<text x="415" y="18" font-size="8" fill="#E07B3A" font-family="DM Sans,sans-serif" opacity=".6" style="animation:llm 2.5s ease infinite 1s">👁</text>
+<text x="575" y="18" font-size="8" fill="#E07B3A" font-family="DM Sans,sans-serif" opacity=".6" style="animation:llm 2.5s ease infinite 1.5s">👁</text>
+<text x="735" y="18" font-size="8" fill="#E07B3A" font-family="DM Sans,sans-serif" opacity=".6" style="animation:llm 2.5s ease infinite 2s">👁</text>
+<text x="848" y="18" font-size="8" fill="#E07B3A" font-family="DM Sans,sans-serif" opacity=".55">LLM Agent — future · monitors all</text>
+
+<!-- ═══════════════════════════════════════
+     PIPELINE BOXES  y=32 to y=100
+     ═══════════════════════════════════════ -->
+
+<!-- 1. S3 RAW -->
+<rect x="10" y="32" width="110" height="72" rx="8" fill="#EBF5FF" stroke="#378ADD" stroke-width="1.2"/>
+<text x="65" y="50" font-size="8" fill="#378ADD" text-anchor="middle" font-family="DM Sans,sans-serif">1 · Storage</text>
+<text x="65" y="64" font-size="10" font-weight="600" fill="#1a5fa8" text-anchor="middle" font-family="DM Sans,sans-serif">AWS S3</text>
+<text x="65" y="76" font-size="8" fill="#1a5fa8" text-anchor="middle" font-family="DM Mono,monospace">4 MOT tables</text>
+<text x="65" y="87" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">Parquet format</text>
+<text x="65" y="97" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">raw · versioned</text>
+
+<line x1="120" y1="68" x2="140" y2="68" stroke="#378ADD" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite" marker-end="url(#ab)"/>
+
+<!-- 2. GLUE ETL -->
+<rect x="142" y="32" width="130" height="72" rx="8" fill="#EDFAF4" stroke="#1D9E75" stroke-width="1.2"/>
+<text x="207" y="50" font-size="8" fill="#1D9E75" text-anchor="middle" font-family="DM Sans,sans-serif">2 · ETL + SQL joins</text>
+<text x="207" y="64" font-size="10" font-weight="600" fill="#0f6147" text-anchor="middle" font-family="DM Sans,sans-serif">AWS Glue</text>
+<text x="207" y="76" font-size="8" fill="#0f6147" text-anchor="middle" font-family="DM Mono,monospace">PySpark job</text>
+<text x="207" y="87" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">SQL LEFT JOIN tables</text>
+<text x="207" y="97" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">PARTITION BY window fn</text>
+
+<line x1="272" y1="68" x2="292" y2="68" stroke="#1D9E75" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite;animation-delay:.1s" marker-end="url(#ag)"/>
+
+<!-- 3. ENRICHED TABLE S3 -->
+<rect x="294" y="32" width="130" height="72" rx="8" fill="#EDFAF4" stroke="#1D9E75" stroke-width="1.2"/>
+<text x="359" y="50" font-size="8" fill="#1D9E75" text-anchor="middle" font-family="DM Sans,sans-serif">3 · Enriched table</text>
+<text x="359" y="64" font-size="10" font-weight="600" fill="#0f6147" text-anchor="middle" font-family="DM Sans,sans-serif">S3 + Athena</text>
+<text x="359" y="76" font-size="8" fill="#0f6147" text-anchor="middle" font-family="DM Mono,monospace">1 row per test_id</text>
+<text x="359" y="87" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">All features attached</text>
+<text x="359" y="97" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">fraud_label col (grows)</text>
+
+<line x1="424" y1="68" x2="444" y2="68" stroke="#7F77DD" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite;animation-delay:.2s" marker-end="url(#ap)"/>
+
+<!-- 4. IF -->
+<rect x="446" y="32" width="120" height="72" rx="8" fill="#F3F2FF" stroke="#7F77DD" stroke-width="1.2"/>
+<text x="506" y="50" font-size="8" fill="#7F77DD" text-anchor="middle" font-family="DM Sans,sans-serif">4 · Model Layer 1</text>
+<text x="506" y="64" font-size="10" font-weight="600" fill="#3d37a8" text-anchor="middle" font-family="DM Sans,sans-serif">SageMaker</text>
+<text x="506" y="76" font-size="8" fill="#3d37a8" text-anchor="middle" font-family="DM Mono,monospace">Isolation Forest</text>
+<text x="506" y="87" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">scikit-learn · anomaly</text>
+<text x="506" y="97" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">scores per test_id</text>
+
+<line x1="566" y1="68" x2="586" y2="68" stroke="#534AB7" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite;animation-delay:.3s" marker-end="url(#axg)"/>
+
+<!-- 5. XGB -->
+<rect x="588" y="32" width="120" height="72" rx="8" fill="#F0EFF8" stroke="#534AB7" stroke-width="1.2"/>
+<text x="648" y="50" font-size="8" fill="#534AB7" text-anchor="middle" font-family="DM Sans,sans-serif">5 · Model Layer 2</text>
+<text x="648" y="64" font-size="10" font-weight="600" fill="#2d2880" text-anchor="middle" font-family="DM Sans,sans-serif">SageMaker</text>
+<text x="648" y="76" font-size="8" fill="#2d2880" text-anchor="middle" font-family="DM Mono,monospace">XGBoost</text>
+<text x="648" y="87" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">trains on labels</text>
+<text x="648" y="97" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">fraud probability</text>
+
+<line x1="708" y1="68" x2="728" y2="68" stroke="#EF9F27" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite;animation-delay:.4s" marker-end="url(#aa)"/>
+
+<!-- 6. COMPOSITE + POWERBI -->
+<rect x="730" y="32" width="120" height="72" rx="8" fill="#FFFBEB" stroke="#EF9F27" stroke-width="1.2"/>
+<text x="790" y="50" font-size="8" fill="#EF9F27" text-anchor="middle" font-family="DM Sans,sans-serif">6 · Score + Dashboard</text>
+<text x="790" y="64" font-size="10" font-weight="600" fill="#7a4e00" text-anchor="middle" font-family="DM Sans,sans-serif">Power BI</text>
+<text x="790" y="76" font-size="8" fill="#7a4e00" text-anchor="middle" font-family="DM Mono,monospace">DirectQuery→Athena</text>
+<text x="790" y="87" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">Ranked list live</text>
+<text x="790" y="97" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">HIGH · MED · LOW</text>
+
+<line x1="850" y1="68" x2="870" y2="68" stroke="#E24B4A" stroke-width="1.2" stroke-dasharray="3 2" style="animation:fR .8s linear infinite;animation-delay:.5s" marker-end="url(#ar)"/>
+
+<!-- 7. ENFORCEMENT -->
+<rect x="872" y="32" width="100" height="72" rx="8" fill="#FFF0F0" stroke="#E24B4A" stroke-width="1.2"/>
+<text x="922" y="50" font-size="8" fill="#E24B4A" text-anchor="middle" font-family="DM Sans,sans-serif">7 · Outcome</text>
+<text x="922" y="64" font-size="10" font-weight="600" fill="#a01a1a" text-anchor="middle" font-family="DM Sans,sans-serif">Enforcement</text>
+<text x="922" y="76" font-size="8" fill="#a01a1a" text-anchor="middle" font-family="DM Mono,monospace">verdict entered</text>
+<text x="922" y="87" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">fraud=1 / clean=0</text>
+<text x="922" y="97" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">case mgmt system</text>
+
+<!-- ═══════════════════════════════════════
+     STEP DOWN TO LAMBDA
+     ═══════════════════════════════════════ -->
+<line x1="922" y1="104" x2="922" y2="130" stroke="#E24B4A" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#ar)"/>
+
+<!-- LAMBDA BOX -->
+<rect x="862" y="132" width="120" height="44" rx="8" fill="#FFF0F0" stroke="#E24B4A" stroke-width="1.2"/>
+<text x="922" y="148" font-size="8" font-weight="600" fill="#E24B4A" text-anchor="middle" font-family="DM Sans,sans-serif">AWS Lambda</text>
+<text x="922" y="160" font-size="7.5" fill="#555" text-anchor="middle" font-family="DM Sans,sans-serif">fires instantly on verdict</text>
+<text x="922" y="170" font-size="7.5" fill="#888" text-anchor="middle" font-family="DM Mono,monospace">event-driven · no cron</text>
+
+<!-- ═══════════════════════════════════════
+     FEEDBACK PATH 1 (RED):
+     Lambda → S3 write fraud_label → EventBridge → SageMaker retrain XGBoost
+     arrow goes: Lambda → left → down → up to XGBoost box
+     ═══════════════════════════════════════ -->
+
+<!-- Lambda down then left to EventBridge -->
+<line x1="862" y1="154" x2="648" y2="154" stroke="#E24B4A" stroke-width="1.2" stroke-dasharray="5 3" style="animation:fL 1.8s linear infinite"/>
+
+<!-- EventBridge box -->
+<rect x="556" y="136" width="180" height="36" rx="7" fill="#FFF8EC" stroke="#EF9F27" stroke-width="1"/>
+<text x="646" y="152" font-size="8" font-weight="600" fill="#7a4e00" text-anchor="middle" font-family="DM Sans,sans-serif">AWS EventBridge</text>
+<text x="646" y="163" font-size="7.5" fill="#888" text-anchor="middle" font-family="DM Sans,sans-serif">schedules monthly retrain on 1st of month</text>
+
+<!-- EventBridge → up to XGBoost -->
+<line x1="648" y1="136" x2="648" y2="104" stroke="#E24B4A" stroke-width="1.2" stroke-dasharray="5 3" style="animation:fL 1.8s linear infinite" marker-end="url(#ar-rev)"/>
+<text x="655" y="122" font-size="7.5" fill="#E24B4A" font-family="DM Sans,sans-serif">XGBoost</text>
+<text x="655" y="132" font-size="7.5" fill="#E24B4A" font-family="DM Sans,sans-serif">retrains monthly</text>
+
+<!-- SageMaker Model Registry note -->
+<rect x="556" y="184" width="180" height="28" rx="6" fill="#F0EFF8" stroke="#534AB7" stroke-width=".8"/>
+<text x="646" y="197" font-size="7.5" font-weight="600" fill="#2d2880" text-anchor="middle" font-family="DM Sans,sans-serif">SageMaker Model Registry</text>
+<text x="646" y="207" font-size="7" fill="#888" text-anchor="middle" font-family="DM Sans,sans-serif">v1 · v2 · v3 · rollback available · approval gate</text>
+
+<!-- ═══════════════════════════════════════
+     FEEDBACK PATH 2 (GREEN):
+     Lambda → S3 library (fraud_label written back to enriched table)
+     arrow goes: Lambda → far left → up to enriched table box (box 3)
+     ═══════════════════════════════════════ -->
+
+<path d="M862 164 L740 164 L740 225 L359 225 L359 104"
+  fill="none" stroke="#1D9E75" stroke-width="1.2" stroke-dasharray="4 3" opacity=".7"
+  style="animation:fL 2.2s linear infinite"
+  marker-end="url(#ag-rev)"/>
+<rect x="380" y="215" width="260" height="13" rx="3" fill="#fff"/>
+<text x="510" y="225" font-size="7.5" fill="#1D9E75" text-anchor="middle" font-family="DM Sans,sans-serif">fraud_label written back to enriched table in S3 (permanent record)</text>
+
+<!-- Also to Isolation Forest — faded green -->
+<path d="M740 225 L506 225 L506 104"
+  fill="none" stroke="#1D9E75" stroke-width="1" stroke-dasharray="4 3" opacity=".4"
+  style="animation:fL 2.5s linear infinite"
+  marker-end="url(#ag-rev)"/>
+<rect x="460" y="214" width="200" height="13" rx="3" fill="#fff"/>
+<text x="560" y="214" font-size="7" fill="#888" text-anchor="middle" font-family="DM Sans,sans-serif">Isolation Forest re-runs on updated data next cycle</text>
+
+<!-- ═══════════════════════════════════════
+     SQL DETAIL BOX
+     ═══════════════════════════════════════ -->
+<rect x="10" y="248" width="450" height="115" rx="8" fill="#EDFAF4" stroke="#1D9E75" stroke-width="1"/>
+<text x="22" y="265" font-size="9" font-weight="600" fill="#0f6147" font-family="DM Sans,sans-serif">SQL in AWS Glue — how enrichment works (no GROUP BY)</text>
+<line x1="10" y1="272" x2="460" y2="272" stroke="#1D9E75" stroke-width=".5" opacity=".3"/>
+
+<!-- GROUP BY crossed out -->
+<rect x="18" y="278" width="200" height="78" rx="6" fill="#fff" stroke="#E24B4A" stroke-width=".8"/>
+<text x="118" y="292" font-size="8" font-weight="600" fill="#E24B4A" text-anchor="middle" font-family="DM Sans,sans-serif">GROUP BY ✕ — never used</text>
+<text x="26" y="304" font-size="7.5" fill="#666" font-family="DM Mono,monospace">SELECT tester_id,</text>
+<text x="26" y="314" font-size="7.5" fill="#666" font-family="DM Mono,monospace">&nbsp;&nbsp;AVG(pass_rate)</text>
+<text x="26" y="324" font-size="7.5" fill="#666" font-family="DM Mono,monospace">FROM mot_tests</text>
+<text x="26" y="334" font-size="7.5" fill="#666" font-family="DM Mono,monospace">GROUP BY tester_id</text>
+<text x="118" y="348" font-size="7" fill="#E24B4A" text-anchor="middle" font-family="DM Sans,sans-serif">→ 1 row per tester. Loses all test rows.</text>
+<!-- cross line through -->
+<line x1="18" y1="278" x2="218" y2="356" stroke="rgba(226,75,74,.3)" stroke-width="1.5"/>
+
+<!-- WINDOW FUNCTION -->
+<rect x="234" y="278" width="218" height="78" rx="6" fill="#fff" stroke="#1D9E75" stroke-width=".8"/>
+<text x="343" y="292" font-size="8" font-weight="600" fill="#1D9E75" text-anchor="middle" font-family="DM Sans,sans-serif">PARTITION BY ✓ — what we use</text>
+<text x="242" y="304" font-size="7.5" fill="#0f6147" font-family="DM Mono,monospace">AVG(pass_rate) OVER (</text>
+<text x="242" y="314" font-size="7.5" fill="#0f6147" font-family="DM Mono,monospace">&nbsp;PARTITION BY region,</text>
+<text x="242" y="324" font-size="7.5" fill="#0f6147" font-family="DM Mono,monospace">&nbsp;garage_type</text>
+<text x="242" y="334" font-size="7.5" fill="#0f6147" font-family="DM Mono,monospace">)</text>
+<text x="343" y="348" font-size="7" fill="#1D9E75" text-anchor="middle" font-family="DM Sans,sans-serif">→ All rows kept. Peer avg attached to each.</text>
+
+<!-- ═══════════════════════════════════════
+     PYSPARK vs PANDAS NOTE
+     ═══════════════════════════════════════ -->
+<rect x="472" y="248" width="500" height="115" rx="8" fill="#F3F2FF" stroke="#7F77DD" stroke-width="1"/>
+<text x="484" y="265" font-size="9" font-weight="600" fill="#3d37a8" font-family="DM Sans,sans-serif">PySpark vs Pandas — where each is used</text>
+<line x1="472" y1="272" x2="972" y2="272" stroke="#7F77DD" stroke-width=".5" opacity=".3"/>
+
+<rect x="480" y="278" width="222" height="78" rx="6" fill="#fff" stroke="#7F77DD" stroke-width=".8"/>
+<text x="591" y="292" font-size="8" font-weight="600" fill="#3d37a8" text-anchor="middle" font-family="DM Sans,sans-serif">AWS Glue — PySpark</text>
+<text x="488" y="305" font-size="7.5" fill="#444" font-family="DM Sans,sans-serif">✓ Big data — years of MOT history</text>
+<text x="488" y="317" font-size="7.5" fill="#444" font-family="DM Sans,sans-serif">✓ Distributes across many machines</text>
+<text x="488" y="329" font-size="7.5" fill="#444" font-family="DM Sans,sans-serif">✓ SQL joins on 32M+ rows</text>
+<text x="488" y="341" font-size="7.5" fill="#444" font-family="DM Sans,sans-serif">✓ Writes enriched Parquet to S3</text>
+<text x="488" y="353" font-size="7.5" fill="#888" font-family="DM Sans,sans-serif">Pandas would crash at this scale</text>
+
+<rect x="714" y="278" width="250" height="78" rx="6" fill="#fff" stroke="#534AB7" stroke-width=".8"/>
+<text x="839" y="292" font-size="8" font-weight="600" fill="#2d2880" text-anchor="middle" font-family="DM Sans,sans-serif">SageMaker — Pandas + scikit-learn</text>
+<text x="722" y="305" font-size="7.5" fill="#444" font-family="DM Sans,sans-serif">✓ Feature matrix (smaller — 20 cols)</text>
+<text x="722" y="317" font-size="7.5" fill="#444" font-family="DM Sans,sans-serif">✓ Isolation Forest training</text>
+<text x="722" y="329" font-size="7.5" fill="#444" font-family="DM Sans,sans-serif">✓ XGBoost training on labelled set</text>
+<text x="722" y="341" font-size="7.5" fill="#444" font-family="DM Sans,sans-serif">✓ SHAP values + evaluation metrics</text>
+<text x="722" y="353" font-size="7.5" fill="#888" font-family="DM Sans,sans-serif">Fine here — enriched set is manageable</text>
+
+<!-- BOTTOM NOTE -->
+<text x="490" y="392" font-size="8" fill="#888" font-family="DM Sans,sans-serif">All storage in S3 as Parquet — raw tables, enriched table, scores, labelled feedback · Athena queries S3 directly · Power BI connects via DirectQuery to Athena</text>
+
+</svg>
+
+</body>
+</html>

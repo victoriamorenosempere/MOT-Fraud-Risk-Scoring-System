@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Technical Architecture</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;min-height:100vh;background:#fff;font-family:'DM Sans',sans-serif;color:#1a1a2e;padding:32px 40px}
+
+h1{font-size:18px;font-weight:600;color:#1a1a2e;margin-bottom:4px}
+.sub{font-size:11px;color:#666;margin-bottom:28px}
+
+/* PIPELINE ROW */
+.pipe{display:flex;align-items:stretch;gap:0;margin-bottom:28px;overflow-x:auto}
+.stage{display:flex;flex-direction:column;align-items:center;min-width:130px;flex:1}
+.stage-box{border-radius:10px;padding:10px 8px;text-align:center;width:100%;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.stage-tag{font-size:7.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;margin-bottom:4px;opacity:.65}
+.stage-name{font-size:10px;font-weight:600;margin-bottom:3px}
+.stage-sw{font-family:'DM Mono',monospace;font-size:9px;color:#666;line-height:1.4;margin-bottom:3px}
+.stage-detail{font-size:8px;color:#888;line-height:1.35}
+
+/* COLOURS */
+.s-blue{background:#EBF4FF;border:1.5px solid #378ADD}
+.s-blue .stage-tag{color:#378ADD}
+.s-blue .stage-name{color:#1a5fa8}
+.s-green{background:#EDFAF4;border:1.5px solid #1D9E75}
+.s-green .stage-tag{color:#1D9E75}
+.s-green .stage-name{color:#0f6147}
+.s-purple{background:#F3F2FF;border:1.5px solid #7F77DD}
+.s-purple .stage-tag{color:#7F77DD}
+.s-purple .stage-name{color:#3d37a8}
+.s-xg{background:#F0EFF8;border:1.5px solid #534AB7}
+.s-xg .stage-tag{color:#534AB7}
+.s-xg .stage-name{color:#2d2880}
+.s-amber{background:#FFFBEB;border:1.5px solid #EF9F27}
+.s-amber .stage-tag{color:#EF9F27}
+.s-amber .stage-name{color:#8a5a00}
+.s-red{background:#FFF0F0;border:1.5px solid #E24B4A}
+.s-red .stage-tag{color:#E24B4A}
+.s-red .stage-name{color:#a01a1a}
+.s-orange{background:#FFF4ED;border:1.5px solid #E07B3A}
+.s-orange .stage-tag{color:#E07B3A}
+.s-orange .stage-name{color:#7a3a0a}
+
+.arr{display:flex;align-items:center;padding:0 4px;flex-shrink:0;color:#999;font-size:16px;align-self:center;margin-top:-8px}
+
+/* FEEDBACK SECTION */
+.feedback{background:#FFF8F8;border:1.5px solid #E24B4A;border-radius:10px;padding:14px 16px;margin-bottom:20px}
+.fb-title{font-size:11px;font-weight:600;color:#E24B4A;margin-bottom:10px}
+.fb-step{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid rgba(226,75,74,.12)}
+.fb-step:first-of-type{border-top:none}
+.fb-num{background:#E24B4A;color:#fff;border-radius:50%;width:18px;height:18px;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.fb-text{font-size:9px;color:#333;line-height:1.55}
+.fb-sw{font-family:'DM Mono',monospace;font-size:9px;background:rgba(226,75,74,.08);padding:1px 5px;border-radius:3px;color:#c03030}
+
+/* SQL SECTION */
+.sql-box{background:#EDFAF4;border:1.5px solid #1D9E75;border-radius:10px;padding:14px 16px;margin-bottom:20px}
+.sql-title{font-size:11px;font-weight:600;color:#0f6147;margin-bottom:8px}
+.sql-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sql-item{font-size:9px;color:#333;line-height:1.55;padding:8px 10px;background:#fff;border-radius:7px;border:1px solid rgba(29,158,117,.2)}
+.sql-code{font-family:'DM Mono',monospace;font-size:8.5px;background:#f0f9f5;padding:6px 8px;border-radius:5px;border-left:3px solid #1D9E75;color:#0f6147;margin-top:4px;line-height:1.6}
+.sql-label{font-size:8px;font-weight:600;color:#1D9E75;margin-bottom:3px}
+
+/* DATA NOTE */
+.data-note{background:#F3F2FF;border:1.5px solid #7F77DD;border-radius:10px;padding:12px 14px;margin-bottom:20px;display:flex;gap:14px}
+.dn-left{flex:1;font-size:9px;color:#333;line-height:1.55}
+.dn-right{flex:1;font-size:9px;color:#333;line-height:1.55}
+.dn-title{font-size:10px;font-weight:600;color:#3d37a8;margin-bottom:5px}
+
+/* QUICK Q&A */
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.qa{background:#f8f8fc;border:1px solid #e0e0f0;border-radius:8px;padding:10px 12px}
+.qa-q{font-size:9px;font-weight:600;color:#333;margin-bottom:4px}
+.qa-a{font-size:8.5px;color:#555;line-height:1.5}
+.qa-sw{font-family:'DM Mono',monospace;font-size:8px;background:#eeeeff;padding:1px 4px;border-radius:3px;color:#3d37a8}
+</style>
+</head>
+<body>
+
+<h1>Technical Architecture — MOT Fraud Risk Scoring System</h1>
+<div class="sub">Software stack · data flow · feedback loop · SQL patterns</div>
+
+<!-- PIPELINE -->
+<div class="pipe">
+
+  <div class="stage">
+    <div class="stage-box s-blue">
+      <div class="stage-tag">Storage</div>
+      <div class="stage-name">AWS S3</div>
+      <div class="stage-sw">s3://dvsa-mot-data/</div>
+      <div class="stage-detail">Raw MOT tables stored as Parquet files. 4 source tables. ~32M rows/year. Versioned.</div>
+    </div>
+  </div>
+  <div class="arr">→</div>
+
+  <div class="stage">
+    <div class="stage-box s-green">
+      <div class="stage-tag">ETL + SQL</div>
+      <div class="stage-name">AWS Glue</div>
+      <div class="stage-sw">Glue Job (PySpark)</div>
+      <div class="stage-detail">SQL LEFT JOINs. Window functions. Domain rules as CASE WHEN columns. Writes enriched table back to S3.</div>
+    </div>
+  </div>
+  <div class="arr">→</div>
+
+  <div class="stage">
+    <div class="stage-box s-green">
+      <div class="stage-tag">Data catalogue</div>
+      <div class="stage-name">AWS Glue Catalogue</div>
+      <div class="stage-sw">Glue Data Catalog</div>
+      <div class="stage-detail">Registers enriched table schema. Makes it queryable via Athena. Tracks versions.</div>
+    </div>
+  </div>
+  <div class="arr">→</div>
+
+  <div class="stage">
+    <div class="stage-box s-purple">
+      <div class="stage-tag">ML Environment</div>
+      <div class="stage-name">AWS SageMaker</div>
+      <div class="stage-sw">Jupyter + Python</div>
+      <div class="stage-detail">Isolation Forest (scikit-learn). XGBoost training. SHAP values. Model evaluation.</div>
+    </div>
+  </div>
+  <div class="arr">→</div>
+
+  <div class="stage">
+    <div class="stage-box s-xg">
+      <div class="stage-tag">Model store</div>
+      <div class="stage-name">S3 + SageMaker Registry</div>
+      <div class="stage-sw">model_IF_v1.pkl<br>model_XGB_v2.json</div>
+      <div class="stage-detail">Versioned model artefacts. Rollback available. Approval gate before deploy.</div>
+    </div>
+  </div>
+  <div class="arr">→</div>
+
+  <div class="stage">
+    <div class="stage-box s-amber">
+      <div class="stage-tag">Scoring output</div>
+      <div class="stage-name">AWS Athena + S3</div>
+      <div class="stage-sw">risk_scores.parquet</div>
+      <div class="stage-detail">Composite scores written back to S3. Queryable via Athena SQL.</div>
+    </div>
+  </div>
+  <div class="arr">→</div>
+
+  <div class="stage">
+    <div class="stage-box s-red">
+      <div class="stage-tag">Dashboard</div>
+      <div class="stage-name">Power BI</div>
+      <div class="stage-sw">DirectQuery → Athena</div>
+      <div class="stage-detail">Live connection to scores. Enforcement sees ranked list. Refreshes automatically.</div>
+    </div>
+  </div>
+  <div class="arr">→</div>
+
+  <div class="stage">
+    <div class="stage-box s-red">
+      <div class="stage-tag">Verdict return</div>
+      <div class="stage-name">Case Mgmt System</div>
+      <div class="stage-sw">DVSA existing system</div>
+      <div class="stage-detail">Enforcement enters fraud/clean verdict. Triggers Lambda write-back.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FEEDBACK LOOP -->
+<div class="feedback">
+  <div class="fb-title">Feedback Loop — step by step with software names</div>
+  <div class="fb-step">
+    <div class="fb-num">1</div>
+    <div class="fb-text">Enforcement officer enters verdict in case management system → <span class="fb-sw">AWS Lambda</span> function fires automatically (event-driven, no manual trigger needed)</div>
+  </div>
+  <div class="fb-step">
+    <div class="fb-num">2</div>
+    <div class="fb-text">Lambda writes <span class="fb-sw">fraud_label = 1</span> back to the enriched table in <span class="fb-sw">AWS S3</span>. Permanent record. This is called a <strong>write-back</strong> or <strong>label propagation</strong>.</div>
+  </div>
+  <div class="fb-step">
+    <div class="fb-num">3</div>
+    <div class="fb-text">On the 1st of each month, <span class="fb-sw">AWS EventBridge</span> (scheduled rule — like a cloud calendar) triggers a <span class="fb-sw">SageMaker Pipeline</span>. This retrains XGBoost on the updated labelled set. This process is called <strong>MLOps</strong> — Machine Learning Operations.</div>
+  </div>
+  <div class="fb-step">
+    <div class="fb-num">4</div>
+    <div class="fb-text">SageMaker evaluates new model vs old model on held-out test data. If Precision@K improves → <strong>new model version deployed automatically</strong>. Old version kept for rollback. Stored in <span class="fb-sw">SageMaker Model Registry</span>.</div>
+  </div>
+  <div class="fb-step">
+    <div class="fb-num">5</div>
+    <div class="fb-text">Same <span class="fb-sw">EventBridge</span> trigger also runs Isolation Forest on all new incoming test data. Scores written to <span class="fb-sw">S3</span>. <span class="fb-sw">Power BI</span> dashboard refreshes automatically via DirectQuery.</div>
+  </div>
+</div>
+
+<!-- SQL PATTERNS -->
+<div class="sql-box">
+  <div class="sql-title">SQL — the difference between GROUP BY and Window Functions (PARTITION BY)</div>
+  <div class="sql-row">
+    <div class="sql-item">
+      <div class="sql-label">GROUP BY — collapses rows ✕ not what we want</div>
+      <div class="sql-code">SELECT tester_id,<br>&nbsp;&nbsp;AVG(pass_rate) as avg_pass<br>FROM mot_tests<br>GROUP BY tester_id</div>
+      <div style="font-size:8.5px;color:#888;margin-top:5px">Returns ONE row per tester. Loses all individual test detail. Cannot join back to test rows. Not useful for our enriched row.</div>
+    </div>
+    <div class="sql-item">
+      <div class="sql-label">PARTITION BY (Window Function) — keeps all rows ✓ what we use</div>
+      <div class="sql-code">SELECT test_id, tester_id, duration,<br>&nbsp;&nbsp;AVG(pass_rate) OVER (<br>&nbsp;&nbsp;&nbsp;&nbsp;PARTITION BY garage_type,<br>&nbsp;&nbsp;&nbsp;&nbsp;region, volume_band<br>&nbsp;&nbsp;&nbsp;&nbsp;ORDER BY test_date<br>&nbsp;&nbsp;&nbsp;&nbsp;ROWS BETWEEN 30 PRECEDING<br>&nbsp;&nbsp;&nbsp;&nbsp;AND CURRENT ROW<br>&nbsp;&nbsp;) as peer_pass_rate<br>FROM mot_tests</div>
+      <div style="font-size:8.5px;color:#888;margin-top:5px">Returns ALL rows. Attaches the rolling 30-day peer average to every individual test row. The row stays intact. This is what feeds Isolation Forest.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PYSPARK NOTE -->
+<div class="data-note">
+  <div class="dn-left">
+    <div class="dn-title">Why PySpark from day one</div>
+    Even the initial historical dataset will be large — years of MOT records across 32M tests per year. Pandas loads everything into memory on one machine. At this scale it will crash or be extremely slow. <strong>PySpark</strong> (via AWS Glue or AWS EMR) distributes the data across multiple machines and processes it in parallel. We use PySpark for the SQL joins and feature engineering, then pass the enriched feature matrix (much smaller — only the relevant columns) to SageMaker where Pandas and scikit-learn handle model training fine.
+  </div>
+  <div class="dn-right">
+    <div class="dn-title">The data journey in code terms</div>
+    <strong style="color:#3d37a8">AWS Glue (PySpark)</strong> — reads raw S3 parquet, runs SQL window functions, writes enriched feature table back to S3<br><br>
+    <strong style="color:#3d37a8">AWS SageMaker (Python/Pandas)</strong> — reads enriched feature table, runs Isolation Forest + XGBoost, writes scores back to S3<br><br>
+    <strong style="color:#3d37a8">AWS Athena (SQL)</strong> — queries scores directly on S3 without loading into a database. Power BI connects here.
+  </div>
+</div>
+
+<!-- QUICK Q&A -->
+<div style="font-size:11px;font-weight:600;color:#333;margin-bottom:10px">Quick-fire Q&A — know these cold</div>
+<div class="qa-grid">
+
+  <div class="qa">
+    <div class="qa-q">What is S3?</div>
+    <div class="qa-a">Amazon Simple Storage Service. Cloud file storage — like a hard drive in the cloud. Stores our raw data tables and model files as Parquet or JSON files.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">What is AWS Glue?</div>
+    <div class="qa-a">Amazon's managed ETL service. Runs PySpark jobs in the cloud without needing to set up servers. We use it for SQL joins, window functions, and writing enriched data back to S3.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">What is SageMaker?</div>
+    <div class="qa-a">Amazon's managed machine learning platform. Gives you Jupyter notebooks in the cloud, model training, model registry, and deployment pipelines. No laptop needed.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">What is AWS Lambda?</div>
+    <div class="qa-a">A function that runs automatically when triggered by an event. We use it to write fraud verdicts back to S3 the moment an enforcement officer enters them — no scheduled batch needed.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">What is AWS EventBridge?</div>
+    <div class="qa-a">A cloud scheduler. Like setting a calendar reminder that triggers code automatically. We use it to trigger monthly model retraining on the 1st of each month.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">What is Parquet?</div>
+    <div class="qa-a">A columnar file format — much faster to query than CSV because you only read the columns you need. Standard format for big data on AWS. PySpark and Athena both read it natively.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">What is Athena?</div>
+    <div class="qa-a">AWS service that lets you run SQL queries directly on files in S3 — no database needed. Power BI connects to Athena to show live scores without importing data.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">What is MLOps?</div>
+    <div class="qa-a">Machine Learning Operations — the practice of automating model training, evaluation, versioning, and deployment. Means the model retrains and redeploys itself monthly without manual intervention.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">Why Parquet not CSV?</div>
+    <div class="qa-a">Parquet is columnar — reading 5 columns from 32M rows reads only those 5 columns from disk. CSV reads every column. 10-100x faster for our analytics queries. Also compresses much better.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">Could this run on Azure instead of AWS?</div>
+    <div class="qa-a">Yes — Azure Data Factory replaces Glue, Azure Databricks replaces SageMaker/PySpark, Azure Blob Storage replaces S3, Azure ML replaces SageMaker. Same architecture, different vendor names. DVSA uses whatever Gov UK cloud framework specifies.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">Why not just keep it in a SQL database?</div>
+    <div class="qa-a">A traditional SQL database stores data on one server — 32M rows per year becomes billions over time and query performance degrades. S3 + Athena scales infinitely and costs near zero for storage. Compute only costs when you query.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q">What is a time-based train/test split?</div>
+    <div class="qa-a">We train XGBoost on fraud cases confirmed before a cutoff date — say Jan 2024. We test it on cases after that date. This prevents data leakage — the model never sees future outcomes during training, mimicking real deployment conditions.</div>
+  </div>
+
+</div>
+
+</body>
+</html>
